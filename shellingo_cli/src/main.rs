@@ -1,30 +1,41 @@
+use std::error::Error;
+use std::io;
+use ratatui::backend::CrosstermBackend;
+use ratatui::{crossterm, Terminal};
+use ratatui::crossterm::execute;
+use ratatui::crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use crate::app::AppState;
+
+mod app;
+mod ui;
+mod events;
 mod question_parser;
-use std::path::PathBuf;
 
-use clap::{arg, command, value_parser};
-use question_parser::read_all_questions_from;
+fn main() -> Result<(), Box<dyn Error>> {
+    //Setup terminal
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, crossterm::terminal::EnterAlternateScreen)?;
 
-const DEFAULT_PATH: &str = "questions";
-const CLUE_PENALTY: i32 = 10;
-const REVEAL_PENALTY:i32 = 5;
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
 
-fn main() {
-    let path = get_path_from_cli_args();
+    // App state
+    let mut app = AppState::new();
+
+    // Main loop
+    loop {
+        terminal.draw(|frame| ui::draw_ui(frame, &app))?;
+        if let Err(e) = events::handle_input(&mut app) {
+            eprintln!("{:?}", e);
+            break;
+        }
+    }
+
+    // Cleanup
+    disable_raw_mode()?;
+    execute!(terminal.backend_mut(), crossterm::terminal::LeaveAlternateScreen)?;
+    terminal.show_cursor()?;
     
-    println!("Loading questions from path: {}", path.display());
-    let questions = read_all_questions_from(path);
-
-}
-
-fn get_path_from_cli_args() -> PathBuf {
-    command!()
-        .arg(arg!(<path> "Path to the questions. Either a file or a directory.")
-           .required(false)
-           .default_value(DEFAULT_PATH)
-           .value_parser(value_parser!(PathBuf))
-        )
-        .get_matches()
-        .get_one::<PathBuf>("path")
-        .expect("Required field!")
-        .to_owned()
+    Ok(())
 }

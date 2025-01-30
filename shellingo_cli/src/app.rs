@@ -1,15 +1,18 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
+use ratatui::prelude::Span;
 use strum::{EnumCount, IntoEnumIterator};
 use strum_macros::{Display, EnumIter};
 
 #[derive(Display, EnumCount, EnumIter, Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum MenuItem {
-    // : The sequence of the enum items determine their positions in the UI Menu
+    // The sequence of the enum items determine their positions in the UI Menu
     Questions,
     Practice,
     Exit,
 }
 
+#[derive(Display, Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Screen {
     QuestionSelector,
     PracticeScreen,
@@ -21,16 +24,25 @@ pub enum Screen {
 //     QuestionEditor,
 // }
 
-pub struct AppState {
+pub struct AppState<'a> {
+    // Pre-calculated constants
     pub menu_to_pos: HashMap<MenuItem, usize>,
     pub pos_to_menu: HashMap<usize, MenuItem>,
+    pub menu_item_spans: Vec<Span<'a>>,
+    // Variables
     pub active_menu: MenuItem,
     pub active_screen: Screen,
     // pub active_popup: Popup,
 }
 
-impl AppState {
+impl<'a> AppState<'a> {
     pub fn new() -> Self {
+        // Generate UI menu items from the enum
+        let menu_item_spans = MenuItem::iter()
+            .map(|mi| Cow::from(mi.to_string()))
+            .map(Span::from)
+            .collect::<Vec<_>>();
+
         // Auto-generated relations between UI elements defined by the sequence of the Enum items.
         let mut iter: usize = 0;
         let menu_to_pos: HashMap<MenuItem, usize> = MenuItem::iter()
@@ -45,6 +57,7 @@ impl AppState {
 
         Self {
             // Menu mappings
+            menu_item_spans,
             menu_to_pos,
             pos_to_menu,
 
@@ -54,19 +67,21 @@ impl AppState {
         }
     }
 
-    pub fn navigate_to_next_menu(&mut self) {
-        self.navigate_relative_to(|current_pos| current_pos + 1);
+    pub fn select_next_menu(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        self.select_menu_relative_to(|current_pos| current_pos + 1);
+        Ok(())
     }
 
-    pub fn navigate_to_prev_menu(&mut self) {
-        self.navigate_relative_to(|current_pos| current_pos - 1);
+    pub fn select_prev_menu(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        self.select_menu_relative_to(|current_pos| current_pos - 1);
+        Ok(())
     }
-    
-    fn navigate_relative_to(&mut self, pos_change: fn(i8) -> i8) {
+
+    fn select_menu_relative_to(&mut self, pos_change: fn(i8) -> i8) {
         let current_pos = self.get_active_menu_position() as i8;
         let new_pos = self.get_valid_position(pos_change(current_pos));
-        let new_menu = self.get_menu_form_pos(&new_pos);
-        self.navigate_to(new_menu); 
+        self.active_menu = self.get_menu_form_pos(&new_pos);
+
     }
 
     pub fn get_active_menu_position(&self) -> usize {
@@ -92,9 +107,12 @@ impl AppState {
         new_pos as usize
     }
 
-    pub fn navigate_to(&mut self, menu_item: MenuItem) {
-        self.active_screen = Self::menu_to_screen(&menu_item);
-        self.active_menu = menu_item;
+    pub fn navigate_to_selected_menu(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        if (self.active_menu == MenuItem::Exit) {
+            return Err(Box::from("Exiting application."))
+        }
+        self.active_screen = Self::menu_to_screen(&self.active_menu);
+        Ok(())
     }
 
     fn menu_to_screen(menu_item: &MenuItem) -> Screen {

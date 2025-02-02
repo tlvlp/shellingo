@@ -1,17 +1,28 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::error::Error;
 use ratatui::prelude::Span;
 use strum::{EnumCount, IntoEnumIterator};
 use strum_macros::{Display, EnumIter};
 
+/// The component that has the focus / is currently active and receives key inputs.
+#[derive(Display, Debug, PartialEq, Eq, Hash, Copy, Clone)]
+pub enum ComponentFocus {
+    Menu,
+    Body,
+    Popup,
+}
+
+/// Tabs of the Menuted menu item
+/// The sequence of the enum items determine their positions in the UI Menu
 #[derive(Display, EnumCount, EnumIter, Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum MenuItem {
-    // The sequence of the enum items determine their positions in the UI Menu
     Questions,
     Practice,
     Exit,
 }
 
+/// Screens of the Body
 #[derive(Display, Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Screen {
     QuestionSelector,
@@ -19,10 +30,15 @@ pub enum Screen {
     ExitScreen,
 }
 
-// pub enum Popup {
-//     None,
-//     QuestionEditor,
-// }
+/// Popup drawn above the other components with an unchangeable focus.
+#[derive(Display, Debug, PartialEq, Eq, Hash, Copy, Clone)]
+pub enum Popup {
+    None,
+    QuestionEditor,
+    ExitConfirmation,
+}
+
+
 
 pub struct AppState<'a> {
     // Pre-calculated constants
@@ -32,7 +48,8 @@ pub struct AppState<'a> {
     // Variables
     pub active_menu: MenuItem,
     pub active_screen: Screen,
-    // pub active_popup: Popup,
+    pub active_popup: Popup,
+    pub focused_component: ComponentFocus,
 }
 
 impl<'a> AppState<'a> {
@@ -64,15 +81,17 @@ impl<'a> AppState<'a> {
             // Default App State
             active_menu: MenuItem::Questions,
             active_screen: Screen::QuestionSelector,
+            active_popup: Popup::None,
+            focused_component: ComponentFocus::Menu,
         }
     }
 
-    pub fn select_next_menu(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn select_next_menu(&mut self) -> Result<(), Box<dyn Error>> {
         self.select_menu_relative_to(|current_pos| current_pos + 1);
         Ok(())
     }
 
-    pub fn select_prev_menu(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn select_prev_menu(&mut self) -> Result<(), Box<dyn Error>> {
         self.select_menu_relative_to(|current_pos| current_pos - 1);
         Ok(())
     }
@@ -107,7 +126,7 @@ impl<'a> AppState<'a> {
         new_pos as usize
     }
 
-    pub fn navigate_to_selected_menu(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn navigate_to_selected_menu(&mut self) -> Result<(), Box<dyn Error>> {
         if (self.active_menu == MenuItem::Exit) {
             return Err(Box::from("Exiting application."))
         }
@@ -121,5 +140,31 @@ impl<'a> AppState<'a> {
             MenuItem::Practice => Screen::PracticeScreen,
             MenuItem::Exit => Screen::ExitScreen,
         }
+    }
+
+    /// Switches the focused component back and forth between the menu and the body
+    pub fn switch_component_focus(&mut self) -> Result<(), Box<dyn Error>> {
+        match self.focused_component {
+            ComponentFocus::Menu => { self.focused_component = ComponentFocus::Body }
+            ComponentFocus::Body => { self.focused_component = ComponentFocus::Menu }
+            ComponentFocus::Popup => { /* Do nothing, popup actions should be submitted or cancelled */ }
+        }
+        Ok(())
+    }
+
+    pub fn open_popup(&mut self, popup: Popup) -> Result<(), Box<dyn Error>> {
+        self.focused_component = ComponentFocus::Popup;
+        self.active_popup = popup;
+        if (popup == Popup::ExitConfirmation) {
+            // Todo implement actual exit confirmation popup
+            return Err(Box::from("Exiting application."))
+        }
+        Ok(())
+    }
+
+    pub fn close_active_popup(&mut self) -> Result<(), Box<dyn Error>> {
+        self.focused_component = ComponentFocus::Body;
+        self.active_popup = Popup::None;
+        Ok(())
     }
 }

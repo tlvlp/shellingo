@@ -1,12 +1,9 @@
-use crate::app::AppState;
+use crate::app::{AppState, ComponentFocus};
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::Stylize;
 use ratatui::text::ToText;
-use ratatui::{
-    layout::{Constraint, Direction, Layout},
-    widgets::{Block, Borders, Tabs},
-    Frame,
-};
+use ratatui::{layout::{Constraint, Direction, Layout}, symbols, widgets::{Block, Borders, Tabs}, Frame};
+use ratatui::symbols::border::Set;
 use ratatui::widgets::{Padding, Paragraph};
 
 pub fn draw_ui(frame: &mut Frame, app: &AppState) {
@@ -19,11 +16,17 @@ pub fn draw_ui(frame: &mut Frame, app: &AppState) {
 
     let menu = Tabs::new(app.menu_item_spans.clone())
         .select(app.get_active_menu_position())
-        .block(Block::default().title("[ Shellingo ]").borders(Borders::all()));
+        .block(Block::bordered()
+            .title("[ Shellingo ]")
+            .border_set(select_border_for(ComponentFocus::Menu, app))
+        );
 
     let body = Paragraph::new(
         app.active_screen.to_text().light_yellow()
-    ).block(Block::bordered().padding(Padding::vertical(1)));
+    ).block(Block::bordered()
+        .padding(Padding::vertical(1))
+        .border_set(select_border_for(ComponentFocus::Body, app))
+    );
 
     frame.render_widget(menu, main_layout[0]);
     frame.render_widget(body, main_layout[1]);
@@ -47,4 +50,8 @@ fn get_centered_constraints(percent: u16) -> [Constraint; 3] {
         Constraint::Percentage(percent),
         Constraint::Percentage((100 - percent) / 2),
     ]
+}
+
+fn select_border_for(expected: ComponentFocus, app: &AppState) -> Set {
+    if app.focused_component == expected { symbols::border::DOUBLE } else { symbols::border::PLAIN }
 }

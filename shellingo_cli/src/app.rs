@@ -7,7 +7,7 @@ use strum_macros::{Display, EnumIter};
 
 /// The component that has the focus / is currently active and receives key inputs.
 #[derive(Display, Debug, PartialEq, Eq, Hash, Copy, Clone)]
-pub enum ComponentFocus {
+pub enum UiComponent {
     Menu,
     Body,
     Popup,
@@ -49,7 +49,7 @@ pub struct AppState<'a> {
     pub active_menu: MenuItem,
     pub active_screen: Screen,
     pub active_popup: Popup,
-    pub focused_component: ComponentFocus,
+    pub focused_component: UiComponent,
 }
 
 impl<'a> AppState<'a> {
@@ -82,7 +82,7 @@ impl<'a> AppState<'a> {
             active_menu: MenuItem::Questions,
             active_screen: Screen::QuestionSelector,
             active_popup: Popup::None,
-            focused_component: ComponentFocus::Menu,
+            focused_component: UiComponent::Menu,
         }
     }
 
@@ -145,15 +145,15 @@ impl<'a> AppState<'a> {
     /// Switches the focused component back and forth between the menu and the body
     pub fn switch_component_focus(&mut self) -> Result<(), Box<dyn Error>> {
         match self.focused_component {
-            ComponentFocus::Menu => { self.focused_component = ComponentFocus::Body }
-            ComponentFocus::Body => { self.focused_component = ComponentFocus::Menu }
-            ComponentFocus::Popup => { /* Do nothing, popup actions should be submitted or cancelled */ }
+            UiComponent::Menu => { self.focused_component = UiComponent::Body }
+            UiComponent::Body => { self.focused_component = UiComponent::Menu }
+            UiComponent::Popup => { /* Do nothing, popup actions should be submitted or cancelled */ }
         }
         Ok(())
     }
 
     pub fn open_popup(&mut self, popup: Popup) -> Result<(), Box<dyn Error>> {
-        self.focused_component = ComponentFocus::Popup;
+        self.focused_component = UiComponent::Popup;
         self.active_popup = popup;
         if (popup == Popup::ExitConfirmation) {
             // Todo implement actual exit confirmation popup
@@ -163,7 +163,7 @@ impl<'a> AppState<'a> {
     }
 
     pub fn close_active_popup(&mut self) -> Result<(), Box<dyn Error>> {
-        self.focused_component = ComponentFocus::Body;
+        self.focused_component = UiComponent::Body;
         self.active_popup = Popup::None;
         Ok(())
     }

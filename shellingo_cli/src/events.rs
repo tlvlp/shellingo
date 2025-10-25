@@ -2,7 +2,7 @@ use std::error::Error;
 use ratatui::crossterm::event::{Event, ModifierKeyCode};
 use ratatui::crossterm::event::KeyCode;
 use ratatui::crossterm::event;
-use crate::app::{AppState, ComponentFocus, Popup};
+use crate::app::{AppState, UiComponent, Popup};
 
 pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
     if event::poll(std::time::Duration::from_millis(100))? {
@@ -13,9 +13,9 @@ pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
                 KeyCode::Tab => app.switch_component_focus(),
                 _ => {
                     match app.focused_component {
-                        ComponentFocus::Menu => handle_menu_input(app, code),
-                        ComponentFocus::Body => handle_body_input(app, code),
-                        ComponentFocus::Popup => handle_popup_input(app, code),
+                        UiComponent::Menu => handle_menu_input(app, code),
+                        UiComponent::Body => handle_body_input(app, code),
+                        UiComponent::Popup => handle_popup_input(app, code),
                     }
                 }
             }

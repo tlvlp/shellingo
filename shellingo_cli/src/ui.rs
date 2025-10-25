@@ -1,4 +1,4 @@
-use crate::app::{AppState, ComponentFocus};
+use crate::app::{AppState, UiComponent};
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::Stylize;
 use ratatui::text::ToText;
@@ -18,14 +18,14 @@ pub fn draw_ui(frame: &mut Frame, app: &AppState) {
         .select(app.get_active_menu_position())
         .block(Block::bordered()
             .title("[ Shellingo ]")
-            .border_set(select_border_for(ComponentFocus::Menu, app))
+            .border_set(select_border_for(UiComponent::Menu, app))
         );
 
     let body = Paragraph::new(
         app.active_screen.to_text().light_yellow()
     ).block(Block::bordered()
         .padding(Padding::vertical(1))
-        .border_set(select_border_for(ComponentFocus::Body, app))
+        .border_set(select_border_for(UiComponent::Body, app))
     );
 
     frame.render_widget(menu, main_layout[0]);
@@ -52,6 +52,6 @@ fn get_centered_constraints(percent: u16) -> [Constraint; 3] {
     ]
 }
 
-fn select_border_for(expected: ComponentFocus, app: &AppState) -> Set {
+fn select_border_for(expected: UiComponent, app: &AppState) -> Set {
     if app.focused_component == expected { symbols::border::DOUBLE } else { symbols::border::PLAIN }
 }

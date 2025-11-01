@@ -1,4 +1,5 @@
 # Shellingo
+[![Built With Ratatui](https://img.shields.io/badge/Built_With_Ratatui-000?logo=ratatui&logoColor=fff)](https://ratatui.rs/)
 
 A simple language-agnostic command line tool for custom vocabulary practice.
 (Without the constant harassment of the Duolingo owl)

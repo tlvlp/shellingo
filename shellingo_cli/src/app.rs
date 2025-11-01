@@ -1,9 +1,9 @@
+use ratatui::prelude::Span;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::error::Error;
-use ratatui::prelude::Span;
 use strum::{EnumCount, IntoEnumIterator};
-use strum_macros::{Display, EnumIter};
+use strum_macros::{Display, EnumCount, EnumIter};
 
 /// The component that has the focus / is currently active and receives key inputs.
 #[derive(Display, Debug, PartialEq, Eq, Hash, Copy, Clone)]
@@ -13,7 +13,7 @@ pub enum UiComponent {
     Popup,
 }
 
-/// Tabs of the Menuted menu item
+/// Menu tabs
 /// The sequence of the enum items determine their positions in the UI Menu
 #[derive(Display, EnumCount, EnumIter, Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum MenuItem {
@@ -37,8 +37,6 @@ pub enum Popup {
     QuestionEditor,
     ExitConfirmation,
 }
-
-
 
 pub struct AppState<'a> {
     // Pre-calculated constants
@@ -100,7 +98,6 @@ impl<'a> AppState<'a> {
         let current_pos = self.get_active_menu_position() as i8;
         let new_pos = self.get_valid_position(pos_change(current_pos));
         self.active_menu = self.get_menu_form_pos(&new_pos);
-
     }
 
     pub fn get_active_menu_position(&self) -> usize {
@@ -110,25 +107,26 @@ impl<'a> AppState<'a> {
     }
 
     fn get_menu_form_pos(&self, pos: &usize) -> MenuItem {
-        self.pos_to_menu.get(pos)
+        self.pos_to_menu
+            .get(pos)
             .expect(format!("Position is not allocated to MenuItem: {}!", pos).as_str())
             .clone()
     }
 
     fn get_valid_position(&self, new_pos: i8) -> usize {
-        let last_pos = MenuItem::COUNT as i8  - 1;
-        if (new_pos > last_pos) {
-            return 0
+        let last_pos = MenuItem::COUNT as i8 - 1;
+        if new_pos > last_pos {
+            return 0;
         }
-        if (new_pos < 0) {
-            return last_pos as usize
+        if new_pos < 0 {
+            return last_pos as usize;
         }
         new_pos as usize
     }
 
     pub fn navigate_to_selected_menu(&mut self) -> Result<(), Box<dyn Error>> {
-        if (self.active_menu == MenuItem::Exit) {
-            return Err(Box::from("Exiting application."))
+        if self.active_menu == MenuItem::Exit {
+            return Err(Box::from("Exiting application."));
         }
         self.active_screen = Self::menu_to_screen(&self.active_menu);
         Ok(())
@@ -145,8 +143,8 @@ impl<'a> AppState<'a> {
     /// Switches the focused component back and forth between the menu and the body
     pub fn switch_component_focus(&mut self) -> Result<(), Box<dyn Error>> {
         match self.focused_component {
-            UiComponent::Menu => { self.focused_component = UiComponent::Body }
-            UiComponent::Body => { self.focused_component = UiComponent::Menu }
+            UiComponent::Menu => self.focused_component = UiComponent::Body,
+            UiComponent::Body => self.focused_component = UiComponent::Menu,
             UiComponent::Popup => { /* Do nothing, popup actions should be submitted or cancelled */ }
         }
         Ok(())
@@ -155,9 +153,9 @@ impl<'a> AppState<'a> {
     pub fn open_popup(&mut self, popup: Popup) -> Result<(), Box<dyn Error>> {
         self.focused_component = UiComponent::Popup;
         self.active_popup = popup;
-        if (popup == Popup::ExitConfirmation) {
+        if popup == Popup::ExitConfirmation {
             // Todo implement actual exit confirmation popup
-            return Err(Box::from("Exiting application."))
+            return Err(Box::from("Exiting application."));
         }
         Ok(())
     }

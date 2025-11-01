@@ -1,13 +1,17 @@
 use crate::app::{AppState, UiComponent};
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::Stylize;
-use ratatui::text::ToText;
-use ratatui::{layout::{Constraint, Direction, Layout}, symbols, widgets::{Block, Borders, Tabs}, Frame};
 use ratatui::symbols::border::Set;
+use ratatui::text::ToText;
 use ratatui::widgets::{Padding, Paragraph};
+use ratatui::{
+    Frame,
+    layout::{Constraint, Direction, Layout},
+    symbols,
+    widgets::{Block, Borders, Tabs},
+};
 
 pub fn draw_ui(frame: &mut Frame, app: &AppState) {
-
     // Split the layout into two areas
     let main_layout = Layout::default()
         .direction(Direction::Vertical)
@@ -16,9 +20,10 @@ pub fn draw_ui(frame: &mut Frame, app: &AppState) {
 
     let menu = Tabs::new(app.menu_item_spans.clone())
         .select(app.get_active_menu_position())
-        .block(Block::bordered()
-            .title("[ Shellingo ]")
-            .border_set(select_border_for(UiComponent::Menu, app))
+        .block(
+            Block::bordered()
+                .title("[ Shellingo ]")
+                .border_set(select_border_for(UiComponent::Menu, app)),
         );
 
     let body = Paragraph::new(
@@ -52,6 +57,10 @@ fn get_centered_constraints(percent: u16) -> [Constraint; 3] {
     ]
 }
 
-fn select_border_for(expected: UiComponent, app: &AppState) -> Set {
-    if app.focused_component == expected { symbols::border::DOUBLE } else { symbols::border::PLAIN }
+fn select_border_for<'a>(component: UiComponent, app: &AppState) -> Set<'a> {
+    if app.focused_component == component {
+        symbols::border::DOUBLE
+    } else {
+        symbols::border::PLAIN
+    }
 }

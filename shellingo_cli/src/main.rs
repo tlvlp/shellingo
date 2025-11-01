@@ -1,15 +1,15 @@
-use std::error::Error;
-use std::io;
+use crate::app::AppState;
 use ratatui::backend::CrosstermBackend;
-use ratatui::{crossterm, Terminal};
 use ratatui::crossterm::execute;
 use ratatui::crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use crate::app::AppState;
+use ratatui::{Terminal, crossterm};
+use std::error::Error;
+use std::io;
 
 mod app;
-mod ui;
 mod events;
 mod question_parser;
+mod ui;
 
 fn main() -> Result<(), Box<dyn Error>> {
     //Setup terminal
@@ -34,8 +34,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Cleanup
     disable_raw_mode()?;
-    execute!(terminal.backend_mut(), crossterm::terminal::LeaveAlternateScreen)?;
+    execute!(
+        terminal.backend_mut(),
+        crossterm::terminal::LeaveAlternateScreen
+    )?;
     terminal.show_cursor()?;
-    
+
     Ok(())
 }

@@ -10,5 +10,5 @@ regex = "1.10.6"
 # TUI
 ratatui = { version = "0.30.0-beta.0", features = ["crossterm"] }
 ratatui-widgets = { version = "0.3.0-beta.0" }
-strum = "0.26"
-strum_macros = "0.26"
+strum = "0.27.2"
+strum_macros = "0.27.2"

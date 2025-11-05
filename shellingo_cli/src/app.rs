@@ -1,9 +1,10 @@
 use ratatui::prelude::Span;
+use ratatui_widgets::list::{ListItem, ListState};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::error::Error;
 use strum::{EnumCount, IntoEnumIterator};
-use strum_macros::{Display, EnumCount, EnumIter};
+use strum_macros::{Display, EnumIter};
 
 /// The component that has the focus / is currently active and receives key inputs.
 #[derive(Display, Debug, PartialEq, Eq, Hash, Copy, Clone)]
@@ -38,6 +39,13 @@ pub enum Popup {
     ExitConfirmation,
 }
 
+#[derive(Debug)]
+pub struct FileList<'a> {
+    pub current_path: String,
+    pub items: Vec<ListItem<'a>>,
+    pub state: ListState,
+}
+
 pub struct AppState<'a> {
     // Pre-calculated constants
     pub menu_to_pos: HashMap<MenuItem, usize>,
@@ -48,6 +56,7 @@ pub struct AppState<'a> {
     pub active_screen: Screen,
     pub active_popup: Popup,
     pub focused_component: UiComponent,
+    pub file_list: FileList<'a>,
 }
 
 impl<'a> AppState<'a> {
@@ -62,11 +71,13 @@ impl<'a> AppState<'a> {
         let mut iter: usize = 0;
         let menu_to_pos: HashMap<MenuItem, usize> = MenuItem::iter()
             .map(|m| {
-            let mapping = (m, iter.clone());
+                let mapping = (m, iter);
                 iter += 1;
-                return mapping
-            }).collect();
-        let pos_to_menu: HashMap<usize, MenuItem> = menu_to_pos.iter()
+                return mapping;
+            })
+            .collect();
+        let pos_to_menu: HashMap<usize, MenuItem> = menu_to_pos
+            .iter()
             .map(|(m, p)| (p.clone(), m.clone()))
             .collect();
 
@@ -81,6 +92,14 @@ impl<'a> AppState<'a> {
             active_screen: Screen::QuestionSelector,
             active_popup: Popup::None,
             focused_component: UiComponent::Menu,
+            file_list: FileList {
+                current_path: "".to_string(),
+                items: vec![
+                    ListItem::new("sdfasdfas"),
+                    ListItem::new("dfsdfsf"),
+                ],
+                state: ListState::default()
+            },
         }
     }
 
@@ -101,8 +120,15 @@ impl<'a> AppState<'a> {
     }
 
     pub fn get_active_menu_position(&self) -> usize {
-        self.menu_to_pos.get(&self.active_menu)
-            .expect(format!("MenuItem missing position allocation: {}!", self.active_menu.to_string()).as_str())
+        self.menu_to_pos
+            .get(&self.active_menu)
+            .expect(
+                format!(
+                    "MenuItem missing position allocation: {}!",
+                    self.active_menu.to_string()
+                )
+                .as_str(),
+            )
             .clone()
     }
 
@@ -145,7 +171,8 @@ impl<'a> AppState<'a> {
         match self.focused_component {
             UiComponent::Menu => self.focused_component = UiComponent::Body,
             UiComponent::Body => self.focused_component = UiComponent::Menu,
-            UiComponent::Popup => { /* Do nothing, popup actions should be submitted or cancelled */ }
+            UiComponent::Popup => { /* Do nothing, popup actions should be submitted or cancelled */
+            }
         }
         Ok(())
     }

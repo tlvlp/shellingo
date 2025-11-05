@@ -1,17 +1,18 @@
 use crate::app::{AppState, UiComponent};
-use ratatui::layout::{Alignment, Rect};
-use ratatui::style::Stylize;
+use ratatui::layout::Rect;
+use ratatui::prelude::Color;
+use ratatui::style::{Style};
 use ratatui::symbols::border::Set;
 use ratatui::text::ToText;
-use ratatui::widgets::{Padding, Paragraph};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
     symbols,
-    widgets::{Block, Borders, Tabs},
+    widgets::{Block, Padding, Tabs},
 };
+use ratatui_widgets::list::{List};
 
-pub fn draw_ui(frame: &mut Frame, app: &AppState) {
+pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
     // Split the layout into two areas
     let main_layout = Layout::default()
         .direction(Direction::Vertical)
@@ -25,16 +26,20 @@ pub fn draw_ui(frame: &mut Frame, app: &AppState) {
                 .title("[ Shellingo ]")
                 .border_set(select_border_for(UiComponent::Menu, app)),
         );
+    
+    app.file_list.state.select_first();
 
-    let body = Paragraph::new(
-        app.active_screen.to_text().light_yellow()
-    ).block(Block::bordered()
-        .padding(Padding::vertical(1))
-        .border_set(select_border_for(UiComponent::Body, app))
-    );
+    let body = List::new(app.file_list.items.to_owned())
+        .block(
+            Block::bordered()
+                .padding(Padding::vertical(1))
+                .border_set(select_border_for(UiComponent::Body, app)),
+        )
+        .highlight_symbol("> ")
+        .highlight_style(Style::new().fg(Color::Black).bg(Color::White));
 
     frame.render_widget(menu, main_layout[0]);
-    frame.render_widget(body, main_layout[1]);
+    frame.render_stateful_widget(body, main_layout[1], &mut app.file_list.state);
 }
 
 /// Create a centered Rect using up certain percentage of the available rect

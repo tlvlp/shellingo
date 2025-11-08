@@ -1,22 +1,61 @@
 use regex::Regex;
 use shellingo_core::question::Question;
-use std::{
-    collections::{HashMap, HashSet},
-    fs::{self},
-    path::PathBuf,
-    sync::LazyLock,
-};
+use std::{collections::{HashMap}, env, fs::{self}, path::PathBuf, sync::LazyLock};
 use walkdir::{DirEntry, Error, WalkDir};
 
 static MULTIPLE_WHITESPACES_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
 
-/// Returns all Questions under the provided path.
-/// Takes both a single file or a directory and recursively parses all Questions under them.
-pub fn read_all_questions_from(path: PathBuf) -> HashMap<String, Question> {
+#[derive(Debug)]
+pub struct QuestionGroup {
+    pub name: String,
+    pub path: PathBuf
+}
+
+impl PartialEq for QuestionGroup {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+            && self.path == other.path
+    }
+}
+
+/// Returns the paths passed in as commandline arguments or the current working directory if there was none
+pub fn get_paths_from(args: Vec<String>) -> Vec<PathBuf> {
+    let paths: Vec<PathBuf> = args.into_iter()
+        .map(PathBuf::from)
+        .collect();
+    if paths.is_empty() { vec![env::current_dir().unwrap()] } else { paths }
+}
+
+pub fn get_all_question_groups_from(paths: Vec<PathBuf>) -> Vec<QuestionGroup> {
+    paths.into_iter()
+        .flat_map(get_all_groups_from_single_path)
+        .collect()
+}
+
+fn get_all_groups_from_single_path(path: PathBuf) -> Vec<QuestionGroup> {
+    get_all_files_under(path)
+        .into_iter()
+        .map(|dir_entry|
+              QuestionGroup {
+                  name: dir_entry.file_name().to_str().unwrap().to_string(),
+                  path: dir_entry.path().to_owned()
+              })
+        .collect()
+}
+
+fn get_all_files_under(path: PathBuf) -> Vec<DirEntry> {
     WalkDir::new(path)
         .into_iter()
         .filter_map(filter_readable_entries)
         .filter(filter_for_files)
+        .collect()
+}
+
+/// Returns all Questions under the provided path.
+/// Takes both a single file or a directory and recursively parses all Questions under them.
+pub fn read_all_questions_from(path: PathBuf) -> HashMap<String, Question> {
+    get_all_files_under(path)
+        .into_iter()
         .filter_map(read_file_to_string_or_skip_on_error)
         .flat_map(get_lines_from_string)
         .filter_map(parse_question_from_line)
@@ -32,30 +71,30 @@ struct ProcessingStep<T> {
 
 fn filter_readable_entries(result: Result<DirEntry, Error>) -> Option<DirEntry> {
     match result {
-        Ok(res) => return Some(res),
+        Ok(res) => Some(res),
         Err(e) => {
             print!("Error: Skipping unreadable directory entry with reason: {}", e);
-            return None;
+            None
         }
     }
 }
 
 fn filter_for_files(dir_entry: &DirEntry) -> bool {
-    dir_entry.path().is_file()
+    !dir_entry.path().is_dir()
 }
 
 fn read_file_to_string_or_skip_on_error(file: DirEntry) -> Option<ProcessingStep<String>> {
     let path = file.path();
     match fs::read_to_string(path) {
         Ok(file_str) => {
-            return Some(ProcessingStep {
+            Some(ProcessingStep {
                 path: path.display().to_string(),
                 result: file_str,
-            });
+            })
         }
         Err(_) => {
             println!("Error: Skipping unreadable file: {}", path.display());
-            return None;
+            None
         }
     }
 }
@@ -86,12 +125,12 @@ fn parse_question_from_line(line_contents: ProcessingStep<String>) -> Option<Que
         );
         return None;
     }
-    let question = remove_exra_whitespaces(split_q[0]);
-    let solution = remove_exra_whitespaces(split_q[1]);
+    let question = remove_extra_whitespaces(split_q[0]);
+    let solution = remove_extra_whitespaces(split_q[1]);
     Some(Question::new(location, question, solution))
 }
 
-fn remove_exra_whitespaces(text: &str) -> String {
+fn remove_extra_whitespaces(text: &str) -> String {
     MULTIPLE_WHITESPACES_REGEX
         .replace_all(text, " ")
         .trim_start()
@@ -118,6 +157,20 @@ mod tests {
     use super::*;
 
     #[test]
+    fn get_paths_from_args_test() {
+        // Given
+        let args = vec!["path1".to_string(), "path2".to_string()];
+        let expected = vec![PathBuf::from("path1"), PathBuf::from("path2")];
+
+        // When
+        let actual = get_paths_from(args);
+
+        // Then
+        assert_eq!(expected, actual);
+    }
+
+
+    #[test]
     fn all_questions_are_parsed_from_nested_subdirectories() {
         // Given
         let path = PathBuf::from("tests/fixtures/nested");
@@ -125,6 +178,26 @@ mod tests {
         let question_map = read_all_questions_from(path);
         // Then
         assert_eq!(question_map.len(), 2);
+    }
+
+    #[test]
+    fn all_groups_are_collected_from_nested_subdirectories() {
+        // Given
+        let paths = vec![
+            PathBuf::from("tests/fixtures/nested"),
+            PathBuf::from("tests/fixtures/comment"),
+        ];
+        let expected = vec![
+            QuestionGroup { name: "f0_q1".to_string(), path: PathBuf::from("tests/fixtures/nested/f0_q1") },
+            QuestionGroup { name: "f1_q1".to_string(), path: PathBuf::from("tests/fixtures/nested/f1/f1_q1") },
+            QuestionGroup { name: "with_comments".to_string(), path: PathBuf::from("tests/fixtures/comment/with_comments") },
+        ];
+
+        // When
+        let actual = get_all_question_groups_from(paths);
+
+        // Then
+        assert_eq!(expected, actual);
     }
 
     #[test]
@@ -158,47 +231,17 @@ mod tests {
         let solutions = &question_map.get(&question_key).unwrap().solutions;
         let locations = &question_map.get(&question_key).unwrap().locations;
 
-        assert_eq!(
-            question_map.len(),
-            1,
-            "All 3 lines from 3 different files merged as one due to their matching question."
-        );
-        assert_eq!(
-            solutions.len(),
-            3,
-            "All 3 answers are kept for the question."
-        );
-        assert_eq!(
-            locations.len(),
-            3,
-            "All 3 locations are kept for the question."
-        );
+        assert_eq!(question_map.len(), 1, "All 3 lines from 3 different files merged as one due to their matching question.");
+        assert_eq!(solutions.len(), 3, "All 3 answers are kept for the question.");
+        assert_eq!(locations.len(), 3, "All 3 locations are kept for the question.");
 
-        assert!(
-            solutions.contains(answer_1),
-            "The expected answer 1 is present"
-        );
-        assert!(
-            solutions.contains(answer_2),
-            "The expected answer 2 is present"
-        );
-        assert!(
-            solutions.contains(answer_3),
-            "The expected answer 3 is present"
-        );
+        assert!(solutions.contains(answer_1), "The expected answer 1 is present");
+        assert!(solutions.contains(answer_2), "The expected answer 2 is present");
+        assert!(solutions.contains(answer_3), "The expected answer 3 is present");
 
-        assert!(
-            locations.contains(location_1),
-            "The expected location 1 is present"
-        );
-        assert!(
-            locations.contains(location_2),
-            "The expected location 2 is present"
-        );
-        assert!(
-            locations.contains(location_3),
-            "The expected location 3 is present"
-        );
+        assert!(locations.contains(location_1), "The expected location 1 is present");
+        assert!(locations.contains(location_2), "The expected location 2 is present");
+        assert!(locations.contains(location_3), "The expected location 3 is present");
     }
 
     #[test]
@@ -207,7 +250,7 @@ mod tests {
         let input = "     my       question ";
         let expected = "my question".to_owned();
         // When
-        let result = remove_exra_whitespaces(&input);
+        let result = remove_extra_whitespaces(&input);
         // Then
         assert_eq!(expected, result);
     }

@@ -5,6 +5,8 @@ use std::collections::HashMap;
 use std::error::Error;
 use strum::{EnumCount, IntoEnumIterator};
 use strum_macros::{Display, EnumIter};
+use crate::question_parser::{get_all_question_groups_from, get_paths_from};
+// use crate::question_parser::{get_paths_from};
 
 /// The component that has the focus / is currently active and receives key inputs.
 #[derive(Display, Debug, PartialEq, Eq, Hash, Copy, Clone)]
@@ -35,13 +37,12 @@ pub enum Screen {
 #[derive(Display, Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Popup {
     None,
-    QuestionEditor,
+    // QuestionEditor,
     ExitConfirmation,
 }
 
 #[derive(Debug)]
 pub struct FileList<'a> {
-    pub current_path: String,
     pub items: Vec<ListItem<'a>>,
     pub state: ListState,
 }
@@ -60,7 +61,7 @@ pub struct AppState<'a> {
 }
 
 impl<'a> AppState<'a> {
-    pub fn new() -> Self {
+    pub fn new(args: Vec<String>) -> Self {
         // Generate UI menu items from the enum
         let menu_item_spans = MenuItem::iter()
             .map(|mi| Cow::from(mi.to_string()))
@@ -81,6 +82,14 @@ impl<'a> AppState<'a> {
             .map(|(m, p)| (p.clone(), m.clone()))
             .collect();
 
+        // Statically loaded question groups from paths passes as commandline arguments
+        let paths = get_paths_from(args);
+        let question_groups = get_all_question_groups_from(paths);
+        let question_groups_for_list = question_groups
+            .iter()
+            .map(|group| {ListItem::new(group.name.clone())})
+            .collect::<Vec<_>>();
+
         Self {
             // Menu mappings
             menu_item_spans,
@@ -93,15 +102,12 @@ impl<'a> AppState<'a> {
             active_popup: Popup::None,
             focused_component: UiComponent::Menu,
             file_list: FileList {
-                current_path: "".to_string(),
-                items: vec![
-                    ListItem::new("sdfasdfas"),
-                    ListItem::new("dfsdfsf"),
-                ],
+                items: question_groups_for_list,
                 state: ListState::default()
             },
         }
     }
+
 
     pub fn select_next_menu(&mut self) -> Result<(), Box<dyn Error>> {
         self.select_menu_relative_to(|current_pos| current_pos + 1);

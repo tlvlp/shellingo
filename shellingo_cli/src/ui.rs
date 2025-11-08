@@ -1,9 +1,7 @@
 use crate::app::{AppState, UiComponent};
-use ratatui::layout::Rect;
 use ratatui::prelude::Color;
 use ratatui::style::{Style};
 use ratatui::symbols::border::Set;
-use ratatui::text::ToText;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
@@ -43,24 +41,24 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
 }
 
 /// Create a centered Rect using up certain percentage of the available rect
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-    let vertical_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(get_centered_constraints(percent_x))
-        .split(r);
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(get_centered_constraints(percent_y))
-        .split(vertical_layout[1])[1]
-}
+// fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+//     let vertical_layout = Layout::default()
+//         .direction(Direction::Vertical)
+//         .constraints(get_centered_constraints(percent_x))
+//         .split(r);
+//     Layout::default()
+//         .direction(Direction::Horizontal)
+//         .constraints(get_centered_constraints(percent_y))
+//         .split(vertical_layout[1])[1]
+// }
 
-fn get_centered_constraints(percent: u16) -> [Constraint; 3] {
-    [
-        Constraint::Percentage((100 - percent) / 2),
-        Constraint::Percentage(percent),
-        Constraint::Percentage((100 - percent) / 2),
-    ]
-}
+// fn get_centered_constraints(percent: u16) -> [Constraint; 3] {
+//     [
+//         Constraint::Percentage((100 - percent) / 2),
+//         Constraint::Percentage(percent),
+//         Constraint::Percentage((100 - percent) / 2),
+//     ]
+// }
 
 fn select_border_for<'a>(component: UiComponent, app: &AppState) -> Set<'a> {
     if app.focused_component == component {

@@ -1,7 +1,7 @@
 use crate::app::{AppState, Popup, UiComponent};
 use ratatui::crossterm::event;
 use ratatui::crossterm::event::KeyCode;
-use ratatui::crossterm::event::{Event, ModifierKeyCode};
+use ratatui::crossterm::event::{Event};
 use std::error::Error;
 
 pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {

@@ -8,7 +8,9 @@ mod ui;
 
 fn main() -> std::io::Result<()> {
     ratatui::run(|terminal| {
-        let args: Vec<String> = env::args().collect();
+        let mut args: Vec<String> = env::args().collect();
+        // Clear the default argument containing the full executable path
+        args.remove(0);
         let mut app = AppState::new(args);
         loop {
             terminal.draw(|frame| ui::draw_ui(frame, &mut app))?;

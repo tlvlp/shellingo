@@ -1,22 +1,11 @@
 use regex::Regex;
 use shellingo_core::question::Question;
 use std::{collections::{HashMap}, env, fs::{self}, path::PathBuf, sync::LazyLock};
+use std::collections::HashSet;
 use walkdir::{DirEntry, Error, WalkDir};
 
 static MULTIPLE_WHITESPACES_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
 
-#[derive(Debug)]
-pub struct QuestionGroup {
-    pub name: String,
-    pub path: PathBuf
-}
-
-impl PartialEq for QuestionGroup {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-            && self.path == other.path
-    }
-}
 
 /// Returns the paths passed in as commandline arguments or the current working directory if there was none
 pub fn get_paths_from(args: Vec<String>) -> Vec<PathBuf> {
@@ -26,21 +15,21 @@ pub fn get_paths_from(args: Vec<String>) -> Vec<PathBuf> {
     if paths.is_empty() { vec![env::current_dir().unwrap()] } else { paths }
 }
 
-pub fn get_all_question_groups_from(paths: Vec<PathBuf>) -> Vec<QuestionGroup> {
+pub fn get_all_question_groups_from(paths: Vec<PathBuf>) -> HashMap<String, HashSet<PathBuf>> {
     paths.into_iter()
         .flat_map(get_all_groups_from_single_path)
         .collect()
 }
 
-fn get_all_groups_from_single_path(path: PathBuf) -> Vec<QuestionGroup> {
+fn get_all_groups_from_single_path(path: PathBuf) -> HashMap<String, HashSet<PathBuf>> {
     get_all_files_under(path)
         .into_iter()
-        .map(|dir_entry|
-              QuestionGroup {
-                  name: dir_entry.file_name().to_str().unwrap().to_string(),
-                  path: dir_entry.path().to_owned()
-              })
-        .collect()
+        .fold(HashMap::new(), |mut acc, dir_entry| {
+            let file_name = dir_entry.file_name().to_str().unwrap().to_string();
+            let paths = acc.entry(file_name).or_insert(HashSet::new());
+            paths.insert(PathBuf::from(dir_entry.into_path()));
+            acc
+        })
 }
 
 fn get_all_files_under(path: PathBuf) -> Vec<DirEntry> {
@@ -49,6 +38,19 @@ fn get_all_files_under(path: PathBuf) -> Vec<DirEntry> {
         .filter_map(filter_readable_entries)
         .filter(filter_for_files)
         .collect()
+}
+fn filter_readable_entries(result: Result<DirEntry, Error>) -> Option<DirEntry> {
+    match result {
+        Ok(res) => Some(res),
+        Err(e) => {
+            print!("Error: Skipping unreadable directory entry with reason: {}", e);
+            None
+        }
+    }
+}
+
+fn filter_for_files(dir_entry: &DirEntry) -> bool {
+    !dir_entry.path().is_dir()
 }
 
 /// Returns all Questions under the provided path.
@@ -67,20 +69,6 @@ pub fn read_all_questions_from(path: PathBuf) -> HashMap<String, Question> {
 struct ProcessingStep<T> {
     result: T,
     path: String,
-}
-
-fn filter_readable_entries(result: Result<DirEntry, Error>) -> Option<DirEntry> {
-    match result {
-        Ok(res) => Some(res),
-        Err(e) => {
-            print!("Error: Skipping unreadable directory entry with reason: {}", e);
-            None
-        }
-    }
-}
-
-fn filter_for_files(dir_entry: &DirEntry) -> bool {
-    !dir_entry.path().is_dir()
 }
 
 fn read_file_to_string_or_skip_on_error(file: DirEntry) -> Option<ProcessingStep<String>> {
@@ -181,23 +169,41 @@ mod tests {
     }
 
     #[test]
-    fn all_groups_are_collected_from_nested_subdirectories() {
+    fn all_groups_are_collected_from_multiple_paths() {
         // Given
         let paths = vec![
             PathBuf::from("tests/fixtures/nested"),
             PathBuf::from("tests/fixtures/comment"),
         ];
-        let expected = vec![
-            QuestionGroup { name: "f0_q1".to_string(), path: PathBuf::from("tests/fixtures/nested/f0_q1") },
-            QuestionGroup { name: "f1_q1".to_string(), path: PathBuf::from("tests/fixtures/nested/f1/f1_q1") },
-            QuestionGroup { name: "with_comments".to_string(), path: PathBuf::from("tests/fixtures/comment/with_comments") },
-        ];
+        let mut expected: HashMap<String, HashSet<PathBuf>> = HashMap::new();
+        expected.insert("f0_q1".to_string(), HashSet::from([PathBuf::from("tests/fixtures/nested/f0_q1")]));
+        expected.insert("f1_q1".to_string(), HashSet::from([PathBuf::from("tests/fixtures/nested/f1/f1_q1")]));
+        expected.insert("with_comments".to_string(), HashSet::from([PathBuf::from("tests/fixtures/comment/with_comments")]));
 
         // When
         let actual = get_all_question_groups_from(paths);
 
         // Then
-        assert_eq!(expected, actual);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn all_groups_are_collected_and_aggregated_from_nested_subdirectories() {
+        // Given
+        let paths = vec![
+            PathBuf::from("tests/fixtures"),
+        ];
+        let mut expected: HashMap<String, HashSet<PathBuf>> = HashMap::new();
+         expected.insert("f0_q1".to_string(), HashSet::from([PathBuf::from("tests/fixtures/collect/f0_q1"), PathBuf::from("tests/fixtures/nested/f0_q1")]));
+         expected.insert("f0_q2".to_string(), HashSet::from([PathBuf::from("tests/fixtures/collect/f0_q2")]));
+         expected.insert("f1_q1".to_string(), HashSet::from([PathBuf::from("tests/fixtures/collect/f1/f1_q1"), PathBuf::from("tests/fixtures/nested/f1/f1_q1")]));
+         expected.insert("with_comments".to_string(), HashSet::from([PathBuf::from("tests/fixtures/comment/with_comments")]));
+
+        // When
+        let actual = get_all_question_groups_from(paths);
+
+        // Then
+        assert_eq!(actual, expected);
     }
 
     #[test]

@@ -6,7 +6,6 @@ use walkdir::{DirEntry, Error, WalkDir};
 
 static MULTIPLE_WHITESPACES_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
 
-
 /// Returns the paths passed in as commandline arguments or the current working directory if there was none
 pub fn get_paths_from(args: Vec<String>) -> Vec<PathBuf> {
     let paths: Vec<PathBuf> = args.into_iter()
@@ -15,17 +14,31 @@ pub fn get_paths_from(args: Vec<String>) -> Vec<PathBuf> {
     if paths.is_empty() { vec![env::current_dir().unwrap()] } else { paths }
 }
 
-pub fn get_all_question_groups_from(paths: Vec<PathBuf>) -> HashMap<String, HashSet<PathBuf>> {
+pub fn collect_all_groups_from(paths: Vec<PathBuf>) -> HashMap<String, HashSet<PathBuf>> {
     paths.into_iter()
-        .flat_map(get_all_groups_from_single_path)
-        .collect()
+        .flat_map(get_groups_from)
+        .fold(HashMap::new(), |mut acc, map_entry| {
+            let group = map_entry.0;
+            let paths = map_entry.1;
+            acc.entry(group).or_insert(HashSet::new()).extend(paths);
+            acc
+        })
 }
 
-fn get_all_groups_from_single_path(path: PathBuf) -> HashMap<String, HashSet<PathBuf>> {
+fn get_groups_from(path: PathBuf) -> HashMap<String, HashSet<PathBuf>> {
     get_all_files_under(path)
         .into_iter()
+        .filter(|dir_entry| dir_entry.file_name().to_owned()
+            .into_string()
+            .unwrap_or("".to_string())
+            .ends_with(".sll")
+        )
         .fold(HashMap::new(), |mut acc, dir_entry| {
-            let file_name = dir_entry.file_name().to_str().unwrap().to_string();
+            let file_name = dir_entry.file_name()
+                .to_owned()
+                .into_string()
+                .unwrap() // Already filtered
+                .replace(".sll", "");
             let paths = acc.entry(file_name).or_insert(HashSet::new());
             paths.insert(PathBuf::from(dir_entry.into_path()));
             acc
@@ -159,48 +172,35 @@ mod tests {
 
 
     #[test]
-    fn all_questions_are_parsed_from_nested_subdirectories() {
+    fn all_groups_are_collected_from_nested_subdirectories_with_mixed_file_types() {
         // Given
-        let path = PathBuf::from("tests/fixtures/nested");
-        // When
-        let question_map = read_all_questions_from(path);
-        // Then
-        assert_eq!(question_map.len(), 2);
-    }
+        let paths = vec![PathBuf::from("tests/fixtures/nested_with_mixed_files")];
 
-    #[test]
-    fn all_groups_are_collected_from_multiple_paths() {
-        // Given
-        let paths = vec![
-            PathBuf::from("tests/fixtures/nested"),
-            PathBuf::from("tests/fixtures/comment"),
-        ];
+        // When
         let mut expected: HashMap<String, HashSet<PathBuf>> = HashMap::new();
-        expected.insert("f0_q1".to_string(), HashSet::from([PathBuf::from("tests/fixtures/nested/f0_q1")]));
-        expected.insert("f1_q1".to_string(), HashSet::from([PathBuf::from("tests/fixtures/nested/f1/f1_q1")]));
-        expected.insert("with_comments".to_string(), HashSet::from([PathBuf::from("tests/fixtures/comment/with_comments")]));
+        expected.insert("f1_q1".to_string(), HashSet::from([PathBuf::from("tests/fixtures/nested_with_mixed_files/f1/f1_q1.sll")]));
+        expected.insert("f0_q1".to_string(), HashSet::from([PathBuf::from("tests/fixtures/nested_with_mixed_files/f0_q1.sll")]));
 
         // When
-        let actual = get_all_question_groups_from(paths);
+        let actual = collect_all_groups_from(paths);
 
         // Then
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn all_groups_are_collected_and_aggregated_from_nested_subdirectories() {
+    fn all_groups_are_collected_from_multiple_paths() {
         // Given
         let paths = vec![
-            PathBuf::from("tests/fixtures"),
+            PathBuf::from("tests/fixtures/duplicate_groups/nested_1"),
+            PathBuf::from("tests/fixtures/duplicate_groups/nested_2"),
         ];
         let mut expected: HashMap<String, HashSet<PathBuf>> = HashMap::new();
-         expected.insert("f0_q1".to_string(), HashSet::from([PathBuf::from("tests/fixtures/collect/f0_q1"), PathBuf::from("tests/fixtures/nested/f0_q1")]));
-         expected.insert("f0_q2".to_string(), HashSet::from([PathBuf::from("tests/fixtures/collect/f0_q2")]));
-         expected.insert("f1_q1".to_string(), HashSet::from([PathBuf::from("tests/fixtures/collect/f1/f1_q1"), PathBuf::from("tests/fixtures/nested/f1/f1_q1")]));
-         expected.insert("with_comments".to_string(), HashSet::from([PathBuf::from("tests/fixtures/comment/with_comments")]));
+        expected.insert("f1_q1".to_string(), HashSet::from([PathBuf::from("tests/fixtures/duplicate_groups/nested_1/f1/f1_q1.sll"), PathBuf::from("tests/fixtures/duplicate_groups/nested_2/f1/f1_q1.sll")]));
+        expected.insert("f0_q1".to_string(), HashSet::from([PathBuf::from("tests/fixtures/duplicate_groups/nested_1/f0_q1.sll"), PathBuf::from("tests/fixtures/duplicate_groups/nested_2/f0_q1.sll")]));
 
         // When
-        let actual = get_all_question_groups_from(paths);
+        let actual = collect_all_groups_from(paths);
 
         // Then
         assert_eq!(actual, expected);
@@ -226,9 +226,9 @@ mod tests {
         let answer_2 = "f0_q2 answer";
         let answer_3 = "f1_q1 answer";
 
-        let location_1 = "tests/fixtures/collect/f1/f1_q1";
-        let location_2 = "tests/fixtures/collect/f0_q1";
-        let location_3 = "tests/fixtures/collect/f0_q2";
+        let location_1 = "tests/fixtures/collect/f1/f1_q1.sll";
+        let location_2 = "tests/fixtures/collect/f0_q1.sll";
+        let location_3 = "tests/fixtures/collect/f0_q2.sll";
 
         // When
         let question_map = read_all_questions_from(path);

@@ -5,7 +5,7 @@ use std::collections::{HashMap};
 use std::error::Error;
 use strum::{EnumCount, IntoEnumIterator};
 use strum_macros::{Display, EnumIter};
-use crate::question_parser::{get_all_question_groups_from, get_paths_from};
+use crate::question_parser::{collect_all_groups_from, get_paths_from};
 
 /// The component that has the focus / is currently active and receives key inputs.
 #[derive(Display, Debug, PartialEq, Eq, Hash, Copy, Clone)]
@@ -83,7 +83,7 @@ impl<'a> AppState<'a> {
 
         // Statically loaded question groups from paths passes as commandline arguments
         let paths = get_paths_from(args);
-        let question_groups = get_all_question_groups_from(paths); //TODO: extend for on-demand question parsing
+        let question_groups = collect_all_groups_from(paths); //TODO: extend for on-demand question parsing
         let mut sorted_groups: Vec<String> = question_groups.keys().cloned().collect();
         sorted_groups.sort();
         let question_groups_for_list = sorted_groups.into_iter()

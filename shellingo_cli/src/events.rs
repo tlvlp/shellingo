@@ -1,4 +1,4 @@
-use crate::app::{AppState, Popup, UiComponent};
+use crate::app::{AppState, Popup, UiBodyItem, UiComponent};
 use ratatui::crossterm::event;
 use ratatui::crossterm::event::KeyCode;
 use ratatui::crossterm::event::{Event};
@@ -9,7 +9,6 @@ pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
         if let Event::Key(key_event) = event::read()? {
             let code = key_event.code;
             match code {
-                // Switch between components
                 KeyCode::Tab => app.switch_component_focus(),
                 _ => match app.focused_component {
                     UiComponent::Menu => handle_menu_input(app, code),
@@ -36,10 +35,21 @@ fn handle_menu_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Er
 }
 
 fn handle_body_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {
-    match code {
-        KeyCode::Esc => app.open_popup(Popup::ExitConfirmation),
-        _ => Ok(()),
+    match app.active_screen {
+        UiBodyItem::QuestionSelector => {
+            match code {
+                KeyCode::Up => app.previous_group(),
+                KeyCode::Down => app.next_group(),
+                KeyCode::Enter => app.select_group(),
+                KeyCode::Char(' ') => app.select_group(),
+                KeyCode::Esc => app.open_popup(Popup::ExitConfirmation),
+                _ => Ok(()),
+            }
+        }
+        UiBodyItem::PracticeScreen => { Ok(())}
+        UiBodyItem::ExitPopup => {Ok(())}
     }
+
 }
 
 fn handle_popup_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {

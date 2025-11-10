@@ -1,4 +1,4 @@
-use crate::app::{AppState, MenuItem, UiComponent};
+use crate::app::{AppState, UiMenuItem, UiComponent};
 use ratatui::prelude::Color;
 use ratatui::style::{Style};
 use ratatui::symbols::border::Set;
@@ -17,7 +17,7 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(3), Constraint::Min(0)])
         .split(frame.area());
-    let layout_header = main_layout[0];
+    let layout_menu = main_layout[0];
     let layout_body = main_layout[1];
 
     let menu = Tabs::new(app.menu_item_spans.clone())
@@ -27,10 +27,10 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
                 .title("[ Shellingo ]")
                 .border_set(select_border_for(UiComponent::Menu, app)),
         );
-    frame.render_widget(menu, layout_header);
+    frame.render_widget(menu, layout_menu);
 
     match app.active_menu {
-        MenuItem::Questions => {
+        UiMenuItem::Questions => {
             let list = get_question_group_list(app);
             if list.is_empty() {
                 frame.render_widget(get_no_items_found(app), layout_body);

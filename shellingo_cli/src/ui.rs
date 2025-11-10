@@ -1,4 +1,4 @@
-use crate::app::{AppState, UiComponent};
+use crate::app::{AppState, MenuItem, UiComponent};
 use ratatui::prelude::Color;
 use ratatui::style::{Style};
 use ratatui::symbols::border::Set;
@@ -9,6 +9,7 @@ use ratatui::{
     widgets::{Block, Padding, Tabs},
 };
 use ratatui_widgets::list::{List};
+use ratatui_widgets::paragraph::Paragraph;
 
 pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
     // Split the layout into two areas
@@ -24,20 +25,33 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
                 .title("[ Shellingo ]")
                 .border_set(select_border_for(UiComponent::Menu, app)),
         );
-    
-    app.file_list.state.select_first();
+    frame.render_widget(menu, main_layout[0]);
 
-    let body = List::new(app.file_list.items.to_owned())
+    match app.active_menu {
+        MenuItem::Questions => {
+            let list = get_question_group_list(app);
+            frame.render_stateful_widget(list, main_layout[1], &mut app.file_list.state);
+        }
+        _ => {
+            let ph = Paragraph::new("Placeholder")
+                .block(Block::bordered()
+                           .padding(Padding::horizontal(1))
+                           .border_set(select_border_for(UiComponent::Body, app)),
+            );
+            frame.render_widget(ph, main_layout[1]);
+        }
+    };
+}
+
+fn get_question_group_list<'a>(app: &mut AppState<'a>) -> List<'a> {
+    List::new(app.file_list.items.to_owned())
         .block(
             Block::bordered()
-                .padding(Padding::vertical(1))
+                .padding(Padding::horizontal(1))
                 .border_set(select_border_for(UiComponent::Body, app)),
         )
         .highlight_symbol("> ")
-        .highlight_style(Style::new().fg(Color::Black).bg(Color::White));
-
-    frame.render_widget(menu, main_layout[0]);
-    frame.render_stateful_widget(body, main_layout[1], &mut app.file_list.state);
+        .highlight_style(Style::new().fg(Color::Black).bg(Color::White))
 }
 
 /// Create a centered Rect using up certain percentage of the available rect

@@ -67,7 +67,7 @@ impl<'a> AppState<'a> {
             .map(Span::from)
             .collect::<Vec<_>>();
 
-        // Auto-generated relations between UI elements defined by the sequence of the Enum items.
+        // Auto-generate relations between UI elements defined by the sequence of the Enum items.
         let mut iter: usize = 0;
         let menu_to_pos: HashMap<MenuItem, usize> = MenuItem::iter()
             .map(|m| {
@@ -81,7 +81,7 @@ impl<'a> AppState<'a> {
             .map(|(m, p)| (p.clone(), m.clone()))
             .collect();
 
-        // Statically loaded question groups from paths passes as commandline arguments
+        // Loaded question groups from paths passes as commandline arguments
         let paths = get_paths_from(args);
         let question_groups = collect_all_groups_from(paths); //TODO: extend for on-demand question parsing
         let mut sorted_groups: Vec<String> = question_groups.keys().cloned().collect();

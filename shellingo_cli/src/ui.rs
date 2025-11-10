@@ -17,6 +17,8 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(3), Constraint::Min(0)])
         .split(frame.area());
+    let layout_header = main_layout[0];
+    let layout_body = main_layout[1];
 
     let menu = Tabs::new(app.menu_item_spans.clone())
         .select(app.get_active_menu_position())
@@ -25,22 +27,29 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
                 .title("[ Shellingo ]")
                 .border_set(select_border_for(UiComponent::Menu, app)),
         );
-    frame.render_widget(menu, main_layout[0]);
+    frame.render_widget(menu, layout_header);
 
     match app.active_menu {
         MenuItem::Questions => {
             let list = get_question_group_list(app);
-            frame.render_stateful_widget(list, main_layout[1], &mut app.file_list.state);
+            if list.is_empty() {
+                frame.render_widget(get_no_items_found(app), layout_body);
+            } else {
+            frame.render_stateful_widget(list, layout_body, &mut app.file_list.state);
+            }
         }
         _ => {
-            let ph = Paragraph::new("Placeholder")
-                .block(Block::bordered()
-                           .padding(Padding::horizontal(1))
-                           .border_set(select_border_for(UiComponent::Body, app)),
-            );
-            frame.render_widget(ph, main_layout[1]);
+            frame.render_widget(get_no_items_found(app), layout_body);
         }
     };
+}
+
+fn get_no_items_found<'a>(app: &mut AppState) -> Paragraph<'a> {
+    Paragraph::new("No items found")
+        .block(Block::bordered()
+                   .padding(Padding::horizontal(1))
+                   .border_set(select_border_for(UiComponent::Body, app)),
+        )
 }
 
 fn get_question_group_list<'a>(app: &mut AppState<'a>) -> List<'a> {

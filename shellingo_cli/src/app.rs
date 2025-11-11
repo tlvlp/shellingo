@@ -1,8 +1,9 @@
 use ratatui::prelude::Span;
 use ratatui_widgets::list::{ListItem, ListState};
 use std::borrow::Cow;
-use std::collections::{HashMap};
+use std::collections::{BTreeMap, HashMap};
 use std::error::Error;
+use shellingo_core::question::Question;
 use strum::{EnumCount, IntoEnumIterator};
 use strum_macros::{Display, EnumIter};
 use crate::question_parser::{collect_all_groups_from, get_paths_from};
@@ -41,20 +42,16 @@ pub enum Popup {
 }
 
 #[derive(Debug)]
-pub struct FileList<'a> {
-    //TODO: Implement a FileList.items that holds all fields in the same structure:
-    // - Group name (Key)
-    // - ListItem for the group
-    // - selected: bool
-    // - Set<Question> (empty by default + lazy parsing)
-    pub items: Vec<ListItem<'a>>,
-    pub state: ListState,
+pub struct ParsedQuestionData<'a> {
+    pub questions_by_group: BTreeMap<String, QuestionGroupDetails<'a>>,
+    pub group_list_state: ListState,
 }
 
-impl<'a> FileList<'a> {
-    pub fn select_current_item(&self) {
-        todo!()
-    }
+#[derive(Debug)]
+pub struct QuestionGroupDetails<'a> {
+    pub group_list_item: ListItem<'a>,
+    pub questions: Vec<Question>,
+    pub is_selected: bool,
 }
 
 pub struct AppState<'a> {
@@ -67,7 +64,7 @@ pub struct AppState<'a> {
     pub active_screen: UiBodyItem,
     pub active_popup: Popup,
     pub focused_component: UiComponent,
-    pub file_list: FileList<'a>,
+    pub question_data: ParsedQuestionData<'a>,
 }
 
 
@@ -96,6 +93,7 @@ impl<'a> AppState<'a> {
         // Loaded question groups from paths passes as commandline arguments
         let paths = get_paths_from(args);
         let question_groups = collect_all_groups_from(paths); //TODO: extend for on-demand question parsing
+
         let mut sorted_groups: Vec<String> = question_groups.keys().cloned().collect();
         sorted_groups.sort();
         let question_groups_for_list = sorted_groups.into_iter()
@@ -113,9 +111,9 @@ impl<'a> AppState<'a> {
             active_screen: UiBodyItem::QuestionSelector,
             active_popup: Popup::None,
             focused_component: UiComponent::Menu,
-            file_list: FileList {
-                items: question_groups_for_list.to_owned(),
-                state: ListState::default()
+            question_data: ParsedQuestionData {
+                questions_by_group: BTreeMap::new(),
+                group_list_state: ListState::default(),
             },
         }
     }
@@ -184,17 +182,17 @@ impl<'a> AppState<'a> {
     }
 
     pub fn next_group(&mut self) -> Result<(), Box<dyn Error>> {
-        self.file_list.state.select_next();
+        self.question_data.state.select_next();
         Ok(())
     }
 
     pub fn previous_group(&mut self) -> Result<(), Box<dyn Error>> {
-        self.file_list.state.select_previous();
+        self.question_data.state.select_previous();
         Ok(())
     }
 
     pub fn select_group(&mut self) -> Result<(), Box<dyn Error>> {
-        if self.file_list.items.is_empty() { return Ok(()) };
+        if self.question_data.items.is_empty() { return Ok(()) };
         // let selection = self.file_list.state.selected().unwrap_or(0);
         Ok(())
     }

@@ -35,7 +35,7 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
             if list.is_empty() {
                 frame.render_widget(get_no_items_found(app), layout_body);
             } else {
-            frame.render_stateful_widget(list, layout_body, &mut app.file_list.state);
+            frame.render_stateful_widget(list, layout_body, &mut app.question_data.state);
             }
         }
         _ => {
@@ -53,7 +53,7 @@ fn get_no_items_found<'a>(app: &mut AppState) -> Paragraph<'a> {
 }
 
 fn get_question_group_list<'a>(app: &mut AppState<'a>) -> List<'a> {
-    List::new(app.file_list.items.to_owned())
+    List::new(app.question_data.items.to_owned())
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))

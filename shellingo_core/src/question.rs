@@ -1,6 +1,6 @@
 use std::{collections::HashSet, hash::Hash};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Question {
     pub locations: HashSet<String>,
     pub question: String,

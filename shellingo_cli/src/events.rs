@@ -1,4 +1,4 @@
-use crate::app::{AppState, Popup, UiBodyItem, UiComponent};
+use crate::app::{AppState, Popup, UiBodyItem, UiFocus};
 use ratatui::crossterm::event;
 use ratatui::crossterm::event::KeyCode;
 use ratatui::crossterm::event::{Event};
@@ -11,9 +11,9 @@ pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
             match code {
                 KeyCode::Tab => app.switch_component_focus(),
                 _ => match app.focused_component {
-                    UiComponent::Menu => handle_menu_input(app, code),
-                    UiComponent::Body => handle_body_input(app, code),
-                    UiComponent::Popup => handle_popup_input(app, code),
+                    UiFocus::Menu => handle_menu_input(app, code),
+                    UiFocus::Body => handle_body_input(app, code),
+                    UiFocus::Popup => handle_popup_input(app, code),
                 },
             }
         } else {
@@ -40,8 +40,8 @@ fn handle_body_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Er
             match code {
                 KeyCode::Up => app.previous_group(),
                 KeyCode::Down => app.next_group(),
-                KeyCode::Enter => app.select_group(),
-                KeyCode::Char(' ') => app.select_group(),
+                KeyCode::Enter => app.toggle_group_item_selection(),
+                KeyCode::Char(' ') => app.toggle_group_item_selection(),
                 KeyCode::Esc => app.open_popup(Popup::ExitConfirmation),
                 _ => Ok(()),
             }

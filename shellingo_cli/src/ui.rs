@@ -1,4 +1,4 @@
-use crate::app::{AppState, UiMenuItem, UiComponent};
+use crate::app::{AppState, UiMenuItem, UiFocus};
 use ratatui::prelude::Color;
 use ratatui::style::{Style};
 use ratatui::symbols::border::Set;
@@ -8,7 +8,7 @@ use ratatui::{
     symbols,
     widgets::{Block, Padding, Tabs},
 };
-use ratatui_widgets::list::{List};
+use ratatui_widgets::list::{List, ListItem};
 use ratatui_widgets::paragraph::Paragraph;
 
 pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
@@ -25,18 +25,13 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
         .block(
             Block::bordered()
                 .title("[ Shellingo ]")
-                .border_set(select_border_for(UiComponent::Menu, app)),
+                .border_set(select_border_for(UiFocus::Menu, app)),
         );
     frame.render_widget(menu, layout_menu);
 
     match app.active_menu {
         UiMenuItem::Questions => {
-            let list = get_question_group_list(app);
-            if list.is_empty() {
-                frame.render_widget(get_no_items_found(app), layout_body);
-            } else {
-            frame.render_stateful_widget(list, layout_body, &mut app.question_data.state);
-            }
+            frame.render_stateful_widget(get_question_group_list(app), layout_body, &mut app.question_group_list_state);
         }
         _ => {
             frame.render_widget(get_no_items_found(app), layout_body);
@@ -48,16 +43,16 @@ fn get_no_items_found<'a>(app: &mut AppState) -> Paragraph<'a> {
     Paragraph::new("No items found")
         .block(Block::bordered()
                    .padding(Padding::horizontal(1))
-                   .border_set(select_border_for(UiComponent::Body, app)),
+                   .border_set(select_border_for(UiFocus::Body, app)),
         )
 }
 
 fn get_question_group_list<'a>(app: &mut AppState<'a>) -> List<'a> {
-    List::new(app.question_data.items.to_owned())
+    List::new(app.question_group_names.clone().into_iter().map(ListItem::new))
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))
-                .border_set(select_border_for(UiComponent::Body, app)),
+                .border_set(select_border_for(UiFocus::Body, app)),
         )
         .highlight_symbol("> ")
         .highlight_style(Style::new().fg(Color::Black).bg(Color::White))
@@ -83,7 +78,7 @@ fn get_question_group_list<'a>(app: &mut AppState<'a>) -> List<'a> {
 //     ]
 // }
 
-fn select_border_for<'a>(component: UiComponent, app: &AppState) -> Set<'a> {
+fn select_border_for<'a>(component: UiFocus, app: &AppState) -> Set<'a> {
     if app.focused_component == component {
         symbols::border::DOUBLE
     } else {

@@ -3,6 +3,8 @@ use ratatui_widgets::list::{ListItem, ListState};
 use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap};
 use std::error::Error;
+use std::ops::Not;
+use std::path::PathBuf;
 use shellingo_core::question::Question;
 use strum::{EnumCount, IntoEnumIterator};
 use strum_macros::{Display, EnumIter};
@@ -10,7 +12,7 @@ use crate::question_parser::{collect_all_groups_from, get_paths_from};
 
 /// The component that has the focus / is currently active and receives key inputs.
 #[derive(Display, Debug, PartialEq, Eq, Hash, Copy, Clone)]
-pub enum UiComponent {
+pub enum UiFocus {
     Menu,
     Body,
     Popup,
@@ -41,19 +43,14 @@ pub enum Popup {
     ExitConfirmation,
 }
 
-#[derive(Debug)]
-pub struct ParsedQuestionData<'a> {
-    pub questions_by_group: BTreeMap<String, QuestionGroupDetails<'a>>,
-    pub group_list_state: ListState,
-}
-
-#[derive(Debug)]
-pub struct QuestionGroupDetails<'a> {
-    pub group_list_item: ListItem<'a>,
+#[derive(Debug, Default, PartialEq, Clone)]
+pub struct QuestionGroupDetails {
     pub questions: Vec<Question>,
+    pub paths: Vec<PathBuf>,
     pub is_selected: bool,
 }
 
+#[derive(Debug)]
 pub struct AppState<'a> {
     // Pre-calculated constants
     pub menu_to_pos: HashMap<UiMenuItem, usize>,
@@ -63,8 +60,10 @@ pub struct AppState<'a> {
     pub active_menu: UiMenuItem,
     pub active_screen: UiBodyItem,
     pub active_popup: Popup,
-    pub focused_component: UiComponent,
-    pub question_data: ParsedQuestionData<'a>,
+    pub focused_component: UiFocus,
+    pub questions_by_groups: BTreeMap<String, QuestionGroupDetails>,
+    pub question_group_list_state: ListState,
+    pub question_group_names: Vec<String>,
 }
 
 
@@ -92,13 +91,13 @@ impl<'a> AppState<'a> {
 
         // Loaded question groups from paths passes as commandline arguments
         let paths = get_paths_from(args);
-        let question_groups = collect_all_groups_from(paths); //TODO: extend for on-demand question parsing
-
-        let mut sorted_groups: Vec<String> = question_groups.keys().cloned().collect();
-        sorted_groups.sort();
-        let question_groups_for_list = sorted_groups.into_iter()
-            .map(ListItem::new)
+        let questions_by_groups = collect_all_groups_from(paths);
+        let question_group_names = questions_by_groups.keys()
+            .cloned()
             .collect::<Vec<_>>();
+
+        let mut question_group_list_state = ListState::default();
+        question_group_list_state.select_first();
 
         Self {
             // Menu mappings
@@ -110,11 +109,10 @@ impl<'a> AppState<'a> {
             active_menu: UiMenuItem::Questions,
             active_screen: UiBodyItem::QuestionSelector,
             active_popup: Popup::None,
-            focused_component: UiComponent::Menu,
-            question_data: ParsedQuestionData {
-                questions_by_group: BTreeMap::new(),
-                group_list_state: ListState::default(),
-            },
+            focused_component: UiFocus::Body,
+            questions_by_groups,
+            question_group_list_state,
+            question_group_names
         }
     }
 
@@ -182,35 +180,40 @@ impl<'a> AppState<'a> {
     }
 
     pub fn next_group(&mut self) -> Result<(), Box<dyn Error>> {
-        self.question_data.state.select_next();
+        self.question_group_list_state.select_next();
         Ok(())
     }
 
     pub fn previous_group(&mut self) -> Result<(), Box<dyn Error>> {
-        self.question_data.state.select_previous();
+        self.question_group_list_state.select_previous();
         Ok(())
     }
 
-    pub fn select_group(&mut self) -> Result<(), Box<dyn Error>> {
-        if self.question_data.items.is_empty() { return Ok(()) };
-        // let selection = self.file_list.state.selected().unwrap_or(0);
+    pub fn toggle_group_item_selection(&mut self) -> Result<(), Box<dyn Error>> {
+        let selected_pos = self.question_group_list_state.selected();
+        if selected_pos.is_none() { self.question_group_list_state.select_first() }
+
+        // FIXME: this assumes unchanged order between `question_group_names` and `question_group_list_state`.
+        //        There must be a nicer way to do this.
+        let selected_group_name = self.question_group_names.get(selected_pos.unwrap()).unwrap();
+        let group_details = self.questions_by_groups.get_mut(selected_group_name).unwrap();
+        group_details.is_selected = group_details.is_selected.not();
         Ok(())
     }
-
 
     /// Switches the focused component back and forth between the menu and the body
     pub fn switch_component_focus(&mut self) -> Result<(), Box<dyn Error>> {
         match self.focused_component {
-            UiComponent::Menu => self.focused_component = UiComponent::Body,
-            UiComponent::Body => self.focused_component = UiComponent::Menu,
-            UiComponent::Popup => { /* Do nothing, popup actions should be submitted or cancelled */
+            UiFocus::Menu => self.focused_component = UiFocus::Body,
+            UiFocus::Body => self.focused_component = UiFocus::Menu,
+            UiFocus::Popup => { /* Do nothing, popup actions should be submitted or cancelled */
             }
         }
         Ok(())
     }
 
     pub fn open_popup(&mut self, popup: Popup) -> Result<(), Box<dyn Error>> {
-        self.focused_component = UiComponent::Popup;
+        self.focused_component = UiFocus::Popup;
         self.active_popup = popup;
         if popup == Popup::ExitConfirmation {
             // Todo implement actual exit confirmation popup
@@ -220,7 +223,7 @@ impl<'a> AppState<'a> {
     }
 
     pub fn close_active_popup(&mut self) -> Result<(), Box<dyn Error>> {
-        self.focused_component = UiComponent::Body;
+        self.focused_component = UiFocus::Body;
         self.active_popup = Popup::None;
         Ok(())
     }

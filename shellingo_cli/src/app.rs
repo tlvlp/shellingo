@@ -1,5 +1,5 @@
 use ratatui::prelude::Span;
-use ratatui_widgets::list::{ListItem, ListState};
+use ratatui_widgets::list::{ListState};
 use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap};
 use std::error::Error;
@@ -63,7 +63,6 @@ pub struct AppState<'a> {
     pub focused_component: UiFocus,
     pub questions_by_groups: BTreeMap<String, QuestionGroupDetails>,
     pub question_group_list_state: ListState,
-    pub question_group_names: Vec<String>,
 }
 
 
@@ -92,9 +91,6 @@ impl<'a> AppState<'a> {
         // Loaded question groups from paths passes as commandline arguments
         let paths = get_paths_from(args);
         let questions_by_groups = collect_all_groups_from(paths);
-        let question_group_names = questions_by_groups.keys()
-            .cloned()
-            .collect::<Vec<_>>();
 
         let mut question_group_list_state = ListState::default();
         question_group_list_state.select_first();
@@ -112,7 +108,6 @@ impl<'a> AppState<'a> {
             focused_component: UiFocus::Body,
             questions_by_groups,
             question_group_list_state,
-            question_group_names
         }
     }
 
@@ -192,11 +187,12 @@ impl<'a> AppState<'a> {
     pub fn toggle_group_item_selection(&mut self) -> Result<(), Box<dyn Error>> {
         let selected_pos = self.question_group_list_state.selected();
         if selected_pos.is_none() { self.question_group_list_state.select_first() }
-
-        // FIXME: this assumes unchanged order between `question_group_names` and `question_group_list_state`.
-        //        There must be a nicer way to do this.
-        let selected_group_name = self.question_group_names.get(selected_pos.unwrap()).unwrap();
-        let group_details = self.questions_by_groups.get_mut(selected_group_name).unwrap();
+        let selected_group_name = self.questions_by_groups.keys()
+            .cloned()
+            .collect::<Vec<String>>()
+            .get(selected_pos.unwrap())
+            .unwrap().to_owned();
+        let group_details = self.questions_by_groups.get_mut(&selected_group_name).unwrap();
         group_details.is_selected = group_details.is_selected.not();
         Ok(())
     }

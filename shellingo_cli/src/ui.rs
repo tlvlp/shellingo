@@ -48,7 +48,18 @@ fn get_no_items_found<'a>(app: &mut AppState) -> Paragraph<'a> {
 }
 
 fn get_question_group_list<'a>(app: &mut AppState<'a>) -> List<'a> {
-    List::new(app.question_group_names.clone().into_iter().map(ListItem::new))
+    List::new(
+        app.questions_by_groups
+            .iter()
+            .map(|(group_name, group_details)| {
+                let selection_postfix = if group_details.is_selected { " *"} else { "" };
+                ListItem::new(format!("{}{}",group_name.clone(), selection_postfix))
+                    .style(
+                        if group_details.is_selected { Style::default().bold().fg(Color::Green) }
+                        else { Style::default() }
+                    )
+            })
+    )
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))

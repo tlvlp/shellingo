@@ -5,6 +5,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::error::Error;
 use std::ops::Not;
 use std::path::PathBuf;
+use ratatui_widgets::table::TableState;
 use shellingo_core::question::Question;
 use strum::{EnumCount, IntoEnumIterator};
 use strum_macros::{Display, EnumIter};
@@ -63,6 +64,7 @@ pub struct AppState<'a> {
     pub focused_component: UiFocus,
     pub questions_by_groups: BTreeMap<String, QuestionGroupDetails>,
     pub question_group_list_state: ListState,
+    pub question_table_state: TableState,
 }
 
 
@@ -94,6 +96,8 @@ impl<'a> AppState<'a> {
 
         let mut question_group_list_state = ListState::default();
         question_group_list_state.select_first();
+        let mut question_table_state = TableState::default();
+        question_table_state.select_first();
 
         Self {
             // Menu mappings
@@ -108,6 +112,7 @@ impl<'a> AppState<'a> {
             focused_component: UiFocus::Body,
             questions_by_groups,
             question_group_list_state,
+            question_table_state,
         }
     }
 

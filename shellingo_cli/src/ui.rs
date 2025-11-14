@@ -10,6 +10,7 @@ use ratatui::{
 };
 use ratatui_widgets::list::{List, ListItem};
 use ratatui_widgets::paragraph::Paragraph;
+use ratatui_widgets::table::{Row, Table};
 
 pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
     // Split the layout into two areas
@@ -17,8 +18,15 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(3), Constraint::Min(0)])
         .split(frame.area());
-    let layout_menu = main_layout[0];
-    let layout_body = main_layout[1];
+    let main_layout_menu = main_layout[0];
+    let main_layout_body = main_layout[1];
+
+    let body_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(20), Constraint::Percentage(80)])
+        .split(main_layout_body);
+    let body_layout_left = body_layout[0];
+    let body_layout_right = body_layout[1];
 
     let menu = Tabs::new(app.menu_item_spans.clone())
         .select(app.get_active_menu_position())
@@ -27,17 +35,19 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
                 .title("[ Shellingo ]")
                 .border_set(select_border_for(UiFocus::Menu, app)),
         );
-    frame.render_widget(menu, layout_menu);
+    frame.render_widget(menu, main_layout_menu);
 
     match app.active_menu {
         UiMenuItem::Questions => {
-            frame.render_stateful_widget(get_question_group_list(app), layout_body, &mut app.question_group_list_state);
+            frame.render_stateful_widget(get_question_group_list(app), body_layout_left, &mut app.question_group_list_state);
+            frame.render_stateful_widget(get_question_table(app), body_layout_right, &mut app.question_table_state);
         }
         _ => {
-            frame.render_widget(get_no_items_found(app), layout_body);
+            frame.render_widget(get_no_items_found(app), body_layout_left);
         }
     };
 }
+
 
 fn get_no_items_found<'a>(app: &mut AppState) -> Paragraph<'a> {
     Paragraph::new("No items found")
@@ -67,6 +77,29 @@ fn get_question_group_list<'a>(app: &mut AppState<'a>) -> List<'a> {
         )
         .highlight_symbol("> ")
         .highlight_style(Style::new().fg(Color::Black).bg(Color::White))
+}
+
+fn get_question_table<'a>(app: &mut AppState<'a>) -> Table<'a> {
+    // todo
+    //  - Implement app.load_questions_for_group --> app.questions_by_groups --> QuestionGroupDetails.questions,
+    //    that is triggered when selecting a group.
+    //  - Load questions from app.load_questions_for_group in a | question | answer | format to the table.
+    //  - Leave the questions loaded in load_questions_for_group,
+    //    but load them again on deselect/select of the group.
+    //  Test data:
+    let rows = [
+        Row::new(vec!["Cell1", "Cell2"]),
+        Row::new(vec!["Cell3", "Cell4"]),
+    ];
+    let widths = [Constraint::Length(5), Constraint::Length(5)];
+    Table::new(rows, widths)
+        .block(
+            Block::bordered()
+                .padding(Padding::horizontal(1))
+                .border_set(select_border_for(UiFocus::Body, app))
+        )
+        .highlight_symbol("> ")
+        .row_highlight_style(Style::new().fg(Color::Black).bg(Color::White))
 }
 
 /// Create a centered Rect using up certain percentage of the available rect

@@ -1,7 +1,7 @@
 use regex::{Regex};
 use shellingo_core::question::Question;
 use std::{collections::{HashMap}, env, fs::{self}, path::PathBuf, sync::LazyLock};
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap};
 use walkdir::{DirEntry, Error, WalkDir};
 use crate::app::QuestionGroupDetails;
 
@@ -218,7 +218,7 @@ mod tests {
             paths: vec![PathBuf::from("tests/fixtures/duplicate_groups/nested_1/f0_q1.sll"), PathBuf::from("tests/fixtures/duplicate_groups/nested_2/f0_q1.sll")],
             is_selected: false,
         });
-        
+
         // When
         let actual = collect_all_groups_from(paths);
 

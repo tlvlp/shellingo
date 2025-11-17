@@ -184,12 +184,12 @@ mod tests {
         expected.insert("f1_q1".to_string(), QuestionGroupDetails {
             questions: vec![],
             paths: vec![PathBuf::from("tests/fixtures/nested_with_mixed_files/f1/f1_q1.sll")],
-            is_selected: false,
+            is_active: false,
         });
         expected.insert("f0_q1".to_string(), QuestionGroupDetails {
             questions: vec![],
             paths: vec![PathBuf::from("tests/fixtures/nested_with_mixed_files/f0_q1.sll")],
-            is_selected: false,
+            is_active: false,
         });
 
         // When
@@ -211,12 +211,12 @@ mod tests {
         expected.insert("f1_q1".to_string(), QuestionGroupDetails {
             questions: vec![],
             paths: vec![PathBuf::from("tests/fixtures/duplicate_groups/nested_1/f1/f1_q1.sll"), PathBuf::from("tests/fixtures/duplicate_groups/nested_2/f1/f1_q1.sll")],
-            is_selected: false,
+            is_active: false,
         });
         expected.insert("f0_q1".to_string(), QuestionGroupDetails {
             questions: vec![],
             paths: vec![PathBuf::from("tests/fixtures/duplicate_groups/nested_1/f0_q1.sll"), PathBuf::from("tests/fixtures/duplicate_groups/nested_2/f0_q1.sll")],
-            is_selected: false,
+            is_active: false,
         });
 
         // When

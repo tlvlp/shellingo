@@ -1,4 +1,4 @@
-use crate::app::{AppState, Popup, UiBodyItem, UiFocus};
+use crate::app::{AppState, UiComponent};
 use ratatui::crossterm::event;
 use ratatui::crossterm::event::KeyCode;
 use ratatui::crossterm::event::{Event};
@@ -8,13 +8,10 @@ pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
     if event::poll(std::time::Duration::from_millis(100))? {
         if let Event::Key(key_event) = event::read()? {
             let code = key_event.code;
-            match code {
-                KeyCode::Tab => app.switch_component_focus(),
-                _ => match app.focused_component {
-                    UiFocus::Menu => handle_menu_input(app, code),
-                    UiFocus::Body => handle_body_input(app, code),
-                    UiFocus::Popup => handle_popup_input(app, code),
-                },
+            match app.active_component {
+                UiComponent::GroupSelector => handle_group_selector_input(app, code),
+                UiComponent::QuestionSelector => handle_question_selector_input(app, code),
+                UiComponent::ExitPopup => handle_exit_popup_input(app, code),
             }
         } else {
             Ok(())
@@ -24,37 +21,31 @@ pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
     }
 }
 
-fn handle_menu_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {
+fn handle_group_selector_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {
     match code {
-        KeyCode::Left => app.select_prev_menu(),
-        KeyCode::Right => app.select_next_menu(),
-        KeyCode::Enter => app.navigate_to_selected_menu(),
-        KeyCode::Esc => app.open_popup(Popup::ExitConfirmation),
+        KeyCode::Up => app.previous_group(),
+        KeyCode::Down => app.next_group(),
+        KeyCode::Enter => app.toggle_group_active_and_load_questions(),
+        KeyCode::Char(' ') => app.toggle_group_active_and_load_questions(),
+        KeyCode::Tab => Ok(app.active_component = UiComponent::QuestionSelector),
+        KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),
     }
 }
 
-fn handle_body_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {
-    match app.active_screen {
-        UiBodyItem::QuestionSelector => {
-            match code {
-                KeyCode::Up => app.previous_group(),
-                KeyCode::Down => app.next_group(),
-                KeyCode::Enter => app.toggle_group_item_selection(),
-                KeyCode::Char(' ') => app.toggle_group_item_selection(),
-                KeyCode::Esc => app.open_popup(Popup::ExitConfirmation),
-                _ => Ok(()),
-            }
-        }
-        UiBodyItem::PracticeScreen => { Ok(())}
-        UiBodyItem::ExitPopup => {Ok(())}
+fn handle_question_selector_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {
+    match code {
+        // KeyCode::Up => app.previous_question(),
+        // KeyCode::Down => app.next_question(),
+        // KeyCode::Enter => app.edit_selected_question(),
+        KeyCode::Tab => Ok(app.active_component = UiComponent::GroupSelector),
+        KeyCode::Esc => app.open_exit_popup(),
+        _ => Ok(()),
     }
-
 }
 
-fn handle_popup_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {
+fn handle_exit_popup_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {
     match code {
-        KeyCode::Esc => app.close_active_popup(), // TODO: Popup close confirmation instead of exit
         _ => Ok(()),
     }
 }

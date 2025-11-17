@@ -1,4 +1,4 @@
-use crate::app::{AppState, UiMenuItem, UiFocus};
+use crate::app::{AppState, UiComponent};
 use ratatui::prelude::Color;
 use ratatui::style::{Style};
 use ratatui::symbols::border::Set;
@@ -6,66 +6,64 @@ use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
     symbols,
-    widgets::{Block, Padding, Tabs},
+    widgets::{Block, Padding},
 };
 use ratatui_widgets::list::{List, ListItem};
 use ratatui_widgets::paragraph::Paragraph;
 use ratatui_widgets::table::{Row, Table};
 
 pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
-    // Split the layout into two areas
+    // Split the main layout
     let main_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(3), Constraint::Min(0)])
         .split(frame.area());
-    let main_layout_menu = main_layout[0];
+    let main_layout_header = main_layout[0];
     let main_layout_body = main_layout[1];
 
+    // Header
+    frame.render_widget(
+        Paragraph::new("[Tab] Switch between panes, [↑↓] navigate in lists, [Enter/Space] select or edit items")
+            .block(Block::bordered().title("[ Shellingo ]"))
+        , main_layout_header
+    );
+
+    // Body
     let body_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(20), Constraint::Percentage(80)])
         .split(main_layout_body);
     let body_layout_left = body_layout[0];
     let body_layout_right = body_layout[1];
-
-    let menu = Tabs::new(app.menu_item_spans.clone())
-        .select(app.get_active_menu_position())
-        .block(
-            Block::bordered()
-                .title("[ Shellingo ]")
-                .border_set(select_border_for(UiFocus::Menu, app)),
-        );
-    frame.render_widget(menu, main_layout_menu);
-
-    match app.active_menu {
-        UiMenuItem::Questions => {
+    match app.active_component {
+        UiComponent::GroupSelector | UiComponent::QuestionSelector => {
             frame.render_stateful_widget(get_question_group_list(app), body_layout_left, &mut app.question_group_list_state);
             frame.render_stateful_widget(get_question_table(app), body_layout_right, &mut app.question_table_state);
         }
         _ => {
-            frame.render_widget(get_no_items_found(app), body_layout_left);
+            frame.render_widget(get_no_items_found(), body_layout_left);
         }
     };
 }
 
 
-fn get_no_items_found<'a>(app: &mut AppState) -> Paragraph<'a> {
+fn get_no_items_found<'a>() -> Paragraph<'a> {
     Paragraph::new("No items found")
         .block(Block::bordered()
                    .padding(Padding::horizontal(1))
-                   .border_set(select_border_for(UiFocus::Body, app)),
+                   .border_set(symbols::border::PLAIN),
         )
 }
 
-fn get_question_group_list<'a>(app: &mut AppState<'a>) -> List<'a> {
+fn get_question_group_list<'a>(app: &mut AppState) -> List<'a> {
     List::new(
         app.questions_by_groups
             .iter()
             .map(|(group_name, group_details)| {
-                let selection_postfix = if group_details.is_selected { " *"} else { "" };
+                let selection_postfix = if group_details.is_active { " *"} else { "" };
                 ListItem::new(format!("{}{}",group_name.clone(), selection_postfix))
                     .style(
-                        if group_details.is_selected { Style::default().bold().fg(Color::Green) }
+                        if group_details.is_active { Style::default().bold().fg(Color::Green) }
                         else { Style::default() }
                     )
             })
@@ -73,13 +71,13 @@ fn get_question_group_list<'a>(app: &mut AppState<'a>) -> List<'a> {
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))
-                .border_set(select_border_for(UiFocus::Body, app)),
+                .border_set(select_border_for(UiComponent::QuestionSelector, app)),
         )
         .highlight_symbol("> ")
         .highlight_style(Style::new().fg(Color::Black).bg(Color::White))
 }
 
-fn get_question_table<'a>(app: &mut AppState<'a>) -> Table<'a> {
+fn get_question_table<'a>(app: &mut AppState) -> Table<'a> {
     // todo
     //  - Implement app.load_questions_for_group --> app.questions_by_groups --> QuestionGroupDetails.questions,
     //    that is triggered when selecting a group.
@@ -96,7 +94,7 @@ fn get_question_table<'a>(app: &mut AppState<'a>) -> Table<'a> {
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))
-                .border_set(select_border_for(UiFocus::Body, app))
+                .border_set(select_border_for(UiComponent::QuestionSelector, app))
         )
         .highlight_symbol("> ")
         .row_highlight_style(Style::new().fg(Color::Black).bg(Color::White))
@@ -122,8 +120,8 @@ fn get_question_table<'a>(app: &mut AppState<'a>) -> Table<'a> {
 //     ]
 // }
 
-fn select_border_for<'a>(component: UiFocus, app: &AppState) -> Set<'a> {
-    if app.focused_component == component {
+fn select_border_for<'a>(component: UiComponent, app: &AppState) -> Set<'a> {
+    if app.active_component == component {
         symbols::border::DOUBLE
     } else {
         symbols::border::PLAIN

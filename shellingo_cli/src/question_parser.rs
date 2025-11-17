@@ -1,7 +1,7 @@
 use regex::{Regex};
 use shellingo_core::question::Question;
 use std::{collections::{HashMap}, env, fs::{self}, path::PathBuf, sync::LazyLock};
-use std::collections::{BTreeMap};
+use std::collections::BTreeMap;
 use walkdir::{DirEntry, Error, WalkDir};
 use crate::app::QuestionGroupDetails;
 
@@ -15,20 +15,26 @@ pub fn get_paths_from(args: Vec<String>) -> Vec<PathBuf> {
     if paths.is_empty() { vec![env::current_dir().unwrap()] } else { paths }
 }
 
-pub fn collect_all_groups_from(paths: Vec<PathBuf>) -> BTreeMap<String, QuestionGroupDetails> {
+pub fn collect_groups_from_multiple_paths(paths: Vec<PathBuf>) -> Vec<QuestionGroupDetails> {
     paths.into_iter()
-        .flat_map(get_groups_from)
+        .flat_map(get_all_groups_under_path)
+        // group Questions from files with matching names
         .fold(BTreeMap::new(), |mut acc, map_entry| {
             let group = map_entry.0;
             let paths = map_entry.1;
-            acc.entry(group)
-                .or_insert(QuestionGroupDetails::default())
-                .paths.extend(paths);
+            let group_details = acc.entry(group.clone())
+                .or_insert(QuestionGroupDetails::default());
+            group_details.paths.extend(paths);
+            group_details.group_name = group;
             acc
         })
+        .values()
+        .cloned()
+        .collect()
+
 }
 
-fn get_groups_from(path: PathBuf) -> HashMap<String, Vec<PathBuf>> {
+fn get_all_groups_under_path(path: PathBuf) -> HashMap<String, Vec<PathBuf>> {
     get_all_files_under(path)
         .into_iter()
         .filter(|dir_entry| dir_entry.file_name().to_owned()
@@ -55,6 +61,7 @@ fn get_all_files_under(path: PathBuf) -> Vec<DirEntry> {
         .filter(filter_for_files)
         .collect()
 }
+
 fn filter_readable_entries(result: Result<DirEntry, Error>) -> Option<DirEntry> {
     match result {
         Ok(res) => Some(res),
@@ -180,20 +187,23 @@ mod tests {
         let paths = vec![PathBuf::from("tests/fixtures/nested_with_mixed_files")];
 
         // When
-        let mut expected = BTreeMap::new();
-        expected.insert("f1_q1".to_string(), QuestionGroupDetails {
-            questions: vec![],
-            paths: vec![PathBuf::from("tests/fixtures/nested_with_mixed_files/f1/f1_q1.sll")],
-            is_active: false,
-        });
-        expected.insert("f0_q1".to_string(), QuestionGroupDetails {
-            questions: vec![],
-            paths: vec![PathBuf::from("tests/fixtures/nested_with_mixed_files/f0_q1.sll")],
-            is_active: false,
-        });
+        let expected = vec![
+            QuestionGroupDetails {
+                group_name: "f0_q1".to_string(),
+                questions: vec![],
+                paths: vec![PathBuf::from("tests/fixtures/nested_with_mixed_files/f0_q1.sll")],
+                is_active: false,
+            },
+            QuestionGroupDetails {
+                group_name: "f1_q1".to_string(),
+                questions: vec![],
+                paths: vec![PathBuf::from("tests/fixtures/nested_with_mixed_files/f1/f1_q1.sll")],
+                is_active: false,
+            },
+        ];
 
         // When
-        let actual = collect_all_groups_from(paths);
+        let actual = collect_groups_from_multiple_paths(paths);
 
         // Then
         assert_eq!(actual, expected);
@@ -206,21 +216,23 @@ mod tests {
             PathBuf::from("tests/fixtures/duplicate_groups/nested_1"),
             PathBuf::from("tests/fixtures/duplicate_groups/nested_2"),
         ];
-        let mut expected = BTreeMap::new();
-
-        expected.insert("f1_q1".to_string(), QuestionGroupDetails {
-            questions: vec![],
-            paths: vec![PathBuf::from("tests/fixtures/duplicate_groups/nested_1/f1/f1_q1.sll"), PathBuf::from("tests/fixtures/duplicate_groups/nested_2/f1/f1_q1.sll")],
-            is_active: false,
-        });
-        expected.insert("f0_q1".to_string(), QuestionGroupDetails {
-            questions: vec![],
-            paths: vec![PathBuf::from("tests/fixtures/duplicate_groups/nested_1/f0_q1.sll"), PathBuf::from("tests/fixtures/duplicate_groups/nested_2/f0_q1.sll")],
-            is_active: false,
-        });
+        let expected = vec![
+            QuestionGroupDetails {
+                group_name: "f0_q1".to_string(),
+                questions: vec![],
+                paths: vec![PathBuf::from("tests/fixtures/duplicate_groups/nested_1/f0_q1.sll"), PathBuf::from("tests/fixtures/duplicate_groups/nested_2/f0_q1.sll")],
+                is_active: false,
+            },
+            QuestionGroupDetails {
+                group_name: "f1_q1".to_string(),
+                questions: vec![],
+                paths: vec![PathBuf::from("tests/fixtures/duplicate_groups/nested_1/f1/f1_q1.sll"), PathBuf::from("tests/fixtures/duplicate_groups/nested_2/f1/f1_q1.sll")],
+                is_active: false,
+            },
+        ];
 
         // When
-        let actual = collect_all_groups_from(paths);
+        let actual = collect_groups_from_multiple_paths(paths);
 
         // Then
         assert_eq!(actual, expected);

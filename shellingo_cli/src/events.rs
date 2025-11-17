@@ -11,7 +11,7 @@ pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
             match app.active_component {
                 UiComponent::GroupSelector => handle_group_selector_input(app, code),
                 UiComponent::QuestionSelector => handle_question_selector_input(app, code),
-                UiComponent::ExitPopup => handle_exit_popup_input(app, code),
+                UiComponent::ExitPopup => handle_exit_popup_input(code),
             }
         } else {
             Ok(())
@@ -44,7 +44,7 @@ fn handle_question_selector_input(app: &mut AppState, code: KeyCode) -> Result<(
     }
 }
 
-fn handle_exit_popup_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {
+fn handle_exit_popup_input(code: KeyCode) -> Result<(), Box<dyn Error>> {
     match code {
         _ => Ok(()),
     }

@@ -91,7 +91,15 @@ fn get_question_table<'a>(app: &mut AppState) -> Table<'a> {
         .row_highlight_style(Style::new().fg(Color::Black).bg(Color::White))
 }
 
-/// Create a centered Rect using up certain percentage of the available rect
+fn select_border_for<'a>(component: UiComponent, app: &AppState) -> Set<'a> {
+    if app.active_component == component {
+        symbols::border::DOUBLE
+    } else {
+        symbols::border::PLAIN
+    }
+}
+
+//// Create a centered Rect using up certain percentage of the available rect
 // fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
 //     let vertical_layout = Layout::default()
 //         .direction(Direction::Vertical)
@@ -111,10 +119,3 @@ fn get_question_table<'a>(app: &mut AppState) -> Table<'a> {
 //     ]
 // }
 
-fn select_border_for<'a>(component: UiComponent, app: &AppState) -> Set<'a> {
-    if app.active_component == component {
-        symbols::border::DOUBLE
-    } else {
-        symbols::border::PLAIN
-    }
-}

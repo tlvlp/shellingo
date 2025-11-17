@@ -17,15 +17,25 @@ pub fn get_paths_from(args: Vec<String>) -> Vec<PathBuf> {
 
 pub fn collect_groups_from_multiple_paths(paths: Vec<PathBuf>) -> Vec<QuestionGroupDetails> {
     paths.into_iter()
-        .flat_map(get_all_groups_under_path)
+        .flat_map(get_all_files_under_path)
+        .filter(|dir_entry| dir_entry.file_name().to_owned()
+            .into_string()
+            .unwrap_or("".to_string())
+            .ends_with(".sll")
+        )
         // group Questions from files with matching names
-        .fold(BTreeMap::new(), |mut acc, map_entry| {
-            let group = map_entry.0;
-            let paths = map_entry.1;
-            let group_details = acc.entry(group.clone())
+        .fold(BTreeMap::new(), |mut acc, dir_entry| {
+            let group_name = dir_entry.file_name()
+                .to_owned()
+                .into_string()
+                .unwrap() // Already filtered
+                .replace(".sll", "");
+
+            let group_details = acc.entry(group_name.clone())
                 .or_insert(QuestionGroupDetails::default());
-            group_details.paths.extend(paths);
-            group_details.group_name = group;
+            group_details.paths.push(PathBuf::from(dir_entry.into_path()));
+            group_details.group_name = group_name;
+
             acc
         })
         .values()
@@ -34,27 +44,7 @@ pub fn collect_groups_from_multiple_paths(paths: Vec<PathBuf>) -> Vec<QuestionGr
 
 }
 
-fn get_all_groups_under_path(path: PathBuf) -> HashMap<String, Vec<PathBuf>> {
-    get_all_files_under(path)
-        .into_iter()
-        .filter(|dir_entry| dir_entry.file_name().to_owned()
-            .into_string()
-            .unwrap_or("".to_string())
-            .ends_with(".sll")
-        )
-        .fold(HashMap::new(), |mut acc, dir_entry| {
-            let file_name = dir_entry.file_name()
-                .to_owned()
-                .into_string()
-                .unwrap() // Already filtered
-                .replace(".sll", "");
-            let paths = acc.entry(file_name).or_insert(Vec::new());
-            paths.push(PathBuf::from(dir_entry.into_path()));
-            acc
-        })
-}
-
-fn get_all_files_under(path: PathBuf) -> Vec<DirEntry> {
+fn get_all_files_under_path(path: PathBuf) -> Vec<DirEntry> {
     WalkDir::new(path)
         .into_iter()
         .filter_map(filter_readable_entries)
@@ -79,7 +69,7 @@ fn filter_for_files(dir_entry: &DirEntry) -> bool {
 /// Returns all Questions under the provided path.
 /// Takes both a single file or a directory and recursively parses all Questions under them.
 pub fn read_all_questions_from(path: PathBuf) -> HashMap<String, Question> {
-    get_all_files_under(path)
+    get_all_files_under_path(path)
         .into_iter()
         .filter_map(read_file_to_string_or_skip_on_error)
         .flat_map(get_lines_from_string)

@@ -4,7 +4,7 @@ use std::ops::Not;
 use std::path::PathBuf;
 use ratatui_widgets::table::TableState;
 use shellingo_core::question::Question;
-use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from};
+use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_paths};
 
 /// Screens of the Body
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
@@ -61,10 +61,18 @@ impl AppState {
     }
 
     pub fn toggle_group_active_and_load_questions(&mut self) -> Result<(), Box<dyn Error>> {
-        let selected_group_pos = self.question_group_list_state.selected().unwrap_or(0);
-        let group_details = self.question_groups.get_mut(selected_group_pos).unwrap();
-        group_details.is_active = group_details.is_active.not();
+        let selected_group = self.get_selected_group();
+        selected_group.is_active = selected_group.is_active.not();
+        if selected_group.is_active {
+            //load questions
+            selected_group.questions = read_all_questions_from_paths(selected_group.paths.clone());
+        }
         Ok(())
+    }
+
+    fn get_selected_group(&mut self) -> &mut QuestionGroupDetails {
+        let selected_group_pos = self.question_group_list_state.selected().unwrap_or(0);
+        self.question_groups.get_mut(selected_group_pos).unwrap()
     }
 
     pub fn open_exit_popup(&mut self) -> Result<(), Box<dyn Error>> {

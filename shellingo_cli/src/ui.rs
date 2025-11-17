@@ -23,7 +23,7 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
 
     // Header
     frame.render_widget(
-        Paragraph::new("[Tab] Switch between panes, [↑↓] navigate in lists, [Enter/Space] select or edit items")
+        Paragraph::new("[Tab] Switch between panes, [↑↓] navigate inside lists, [Enter/Space] select or edit items")
             .block(Block::bordered().title("[ Shellingo ]"))
         , main_layout_header
     );
@@ -45,7 +45,6 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
         }
     };
 }
-
 
 fn get_no_items_found<'a>() -> Paragraph<'a> {
     Paragraph::new("No items found")
@@ -71,7 +70,7 @@ fn get_question_group_list<'a>(app: &mut AppState) -> List<'a> {
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))
-                .border_set(select_border_for(UiComponent::QuestionSelector, app)),
+                .border_set(select_border_for(UiComponent::GroupSelector, app)),
         )
         .highlight_symbol("> ")
         .highlight_style(Style::new().fg(Color::Black).bg(Color::White))

@@ -43,7 +43,7 @@ impl AppState {
 
         Self {
             // Default App State
-            active_component: UiComponent::QuestionSelector,
+            active_component: UiComponent::GroupSelector,
             questions_by_groups,
             question_group_list_state,
             question_table_state,
@@ -81,5 +81,4 @@ impl AppState {
         // Todo implement actual exit confirmation popup
         Err(Box::from("Exiting application."))
     }
-
 }

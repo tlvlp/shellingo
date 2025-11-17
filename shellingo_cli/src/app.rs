@@ -70,6 +70,15 @@ impl AppState {
         Ok(())
     }
 
+    pub fn get_questions_for_selected_group(&mut self) -> Vec<Question> {
+        let selected = self.get_selected_group();
+        if selected.is_active {
+            selected.questions.clone()
+        } else {
+            vec![]
+        }
+    }
+
     fn get_selected_group(&mut self) -> &mut QuestionGroupDetails {
         let selected_group_pos = self.question_group_list_state.selected().unwrap_or(0);
         self.question_groups.get_mut(selected_group_pos).unwrap()

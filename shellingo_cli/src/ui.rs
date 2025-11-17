@@ -77,18 +77,10 @@ fn get_question_group_list<'a>(app: &mut AppState) -> List<'a> {
 }
 
 fn get_question_table<'a>(app: &mut AppState) -> Table<'a> {
-    // todo
-    //  - Implement app.load_questions_for_group --> app.questions_by_groups --> QuestionGroupDetails.questions,
-    //    that is triggered when selecting a group.
-    //  - Load questions from app.load_questions_for_group in a | question | answer | format to the table.
-    //  - Leave the questions loaded in load_questions_for_group,
-    //    but load them again on deselect/select of the group.
-    //  Test data:
-    let rows = [
-        Row::new(vec!["Cell1", "Cell2"]),
-        Row::new(vec!["Cell3", "Cell4"]),
-    ];
-    let widths = [Constraint::Length(5), Constraint::Length(5)];
+    let rows = app.get_questions_for_selected_group()
+        .into_iter()
+        .map(|q| Row::new([q.question, format!("{:?}", q.solutions)]));
+    let widths = [Constraint::Fill(2), Constraint::Fill(8)];
     Table::new(rows, widths)
         .block(
             Block::bordered()

@@ -1,4 +1,4 @@
-use crate::app::{AppState, UiComponent};
+use crate::app::{AppPhase, AppState, UiComponent};
 use ratatui::prelude::Color;
 use ratatui::style::{Style};
 use ratatui::symbols::border::Set;
@@ -37,14 +37,14 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
         .split(main_layout_body);
     let body_layout_left = body_layout[0];
     let body_layout_right = body_layout[1];
-    match app.get_active_component() {
-        UiComponent::GroupSelector | UiComponent::QuestionSelector | UiComponent::ExitPopup => {
+    match app.get_app_phase_for_active_component() {
+        AppPhase::Setup => {
             frame.render_stateful_widget(get_question_group_list(app), body_layout_left, &mut app.question_group_list_state);
             frame.render_stateful_widget(get_question_table(app), body_layout_right, &mut app.question_table_state);
         }
-        _ => {
-            frame.render_widget(get_no_items_found(), body_layout_left);
-        }
+        // _ => {
+        //     frame.render_widget(get_no_items_found(), body_layout_left);
+        // }
     };
 
     // Exit popup
@@ -69,13 +69,13 @@ fn get_exit_popup<'a>() -> Paragraph<'a> {
         ).alignment(Alignment::Center)
 }
 
-fn get_no_items_found<'a>() -> Paragraph<'a> {
-    Paragraph::new("No items found")
-        .block(Block::bordered()
-                   .padding(Padding::horizontal(1))
-                   .border_set(symbols::border::PLAIN),
-        )
-}
+// fn get_no_items_found<'a>() -> Paragraph<'a> {
+//     Paragraph::new("No items found")
+//         .block(Block::bordered()
+//                    .padding(Padding::horizontal(1))
+//                    .border_set(symbols::border::PLAIN),
+//         )
+// }
 
 fn get_question_group_list<'a>(app: &mut AppState) -> List<'a> {
     List::new(

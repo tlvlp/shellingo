@@ -5,6 +5,12 @@ use ratatui_widgets::table::TableState;
 use shellingo_core::question::Question;
 use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_paths, QuestionGroupDetails};
 
+#[derive(Debug, Clone)]
+pub enum AppPhase {
+    Setup,
+    // Practice,
+}
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum UiComponent {
     GroupSelector,
@@ -36,6 +42,20 @@ impl AppState {
             question_groups,
             question_group_list_state,
             question_table_state,
+        }
+    }
+
+    pub fn get_app_phase_for_active_component(&self) -> AppPhase {
+        self.get_app_phase_for_component(&self.active_component)
+    }
+
+    fn get_app_phase_for_component(&self, component: &UiComponent) -> AppPhase {
+        match component {
+            UiComponent::GroupSelector => {AppPhase::Setup}
+            UiComponent::QuestionSelector => {AppPhase::Setup}
+            UiComponent::ExitPopup => {
+                self.get_app_phase_for_component(&self.last_active_component)
+            }
         }
     }
 

@@ -27,7 +27,7 @@ fn handle_group_selector_input(app: &mut AppState, code: KeyCode) -> Result<(), 
         KeyCode::Down => app.next_group(),
         KeyCode::Enter => app.toggle_group_active_and_load_questions(),
         KeyCode::Char(' ') => app.toggle_group_active_and_load_questions(),
-        KeyCode::Tab => Ok(app.active_component = UiComponent::QuestionSelector),
+        KeyCode::Tab => app.toggle_group_and_question_selectors(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),
     }
@@ -35,10 +35,11 @@ fn handle_group_selector_input(app: &mut AppState, code: KeyCode) -> Result<(), 
 
 fn handle_question_selector_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {
     match code {
-        // KeyCode::Up => app.previous_question(),
-        // KeyCode::Down => app.next_question(),
+        KeyCode::Up => app.previous_question(),
+        KeyCode::Down => app.next_question(),
         // KeyCode::Enter => app.edit_selected_question(),
-        KeyCode::Tab => Ok(app.active_component = UiComponent::GroupSelector),
+        // KeyCode::Char(' ') => app.edit_selected_question(),
+        KeyCode::Tab => app.toggle_group_and_question_selectors(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),
     }

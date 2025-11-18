@@ -84,6 +84,27 @@ impl AppState {
         self.question_groups.get_mut(selected_group_pos).unwrap()
     }
 
+    pub fn previous_question(&mut self) -> Result<(), Box<dyn Error>> {
+        self.question_table_state.select_previous();
+        Ok(())
+    }
+
+    pub fn next_question(&mut self) -> Result<(), Box<dyn Error>> {
+        self.question_table_state.select_next();
+        Ok(())
+    }
+
+    pub fn toggle_group_and_question_selectors(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.active_component == UiComponent::GroupSelector {
+            self.active_component = UiComponent::QuestionSelector;
+            self.question_table_state.select_first();
+        } else {
+            self.active_component = UiComponent::GroupSelector;
+            self.question_table_state.select(None);
+        }
+        Ok(())
+    }
+
     pub fn open_exit_popup(&mut self) -> Result<(), Box<dyn Error>> {
         self.active_component = UiComponent::ExitPopup;
         // Todo implement actual exit confirmation popup

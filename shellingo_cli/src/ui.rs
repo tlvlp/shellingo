@@ -8,7 +8,7 @@ use ratatui::{
     symbols,
     widgets::{Block, Padding},
 };
-use ratatui::layout::{Flex, Rect};
+use ratatui::layout::{Alignment, Flex, Rect};
 use ratatui_widgets::clear::Clear;
 use ratatui_widgets::list::{List, ListItem};
 use ratatui_widgets::paragraph::Paragraph;
@@ -49,18 +49,24 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
 
     // Exit popup
     if app.get_active_component() == UiComponent::ExitPopup {
-        let popup = Paragraph::new("Do you want to exit Shellingo?\n[Enter] Yes, [Esc] No")
-            .block(Block::bordered()
-                       .title(" Exit ")
-                       .padding(Padding::horizontal(1))
-                       .border_set(symbols::border::DOUBLE)
-                       .style(Style::default().bg(Color::Red)),
-            );
-        let area = popup_area(frame.area(), 35, 4);
-        frame.render_widget(Clear, area); //this clears out the background
-        frame.render_widget(popup, area);
+        let popup_area = popup_area(frame.area(), 37, 6);
+        let popup = get_exit_popup();
+        frame.render_widget(Clear, popup_area);
+        frame.render_widget(popup, popup_area);
 
     }
+}
+
+fn get_exit_popup<'a>() -> Paragraph<'a> {
+    Paragraph::new("Do you want to exit Shellingo?\n\
+                        [Enter] Yes, [Esc] No")
+        .block(Block::bordered()
+            .title("[ Exit ]")
+            .padding(Padding::horizontal(1))
+            .padding(Padding::vertical(1))
+            .border_set(symbols::border::DOUBLE)
+            .style(Style::default().fg(Color::Red))
+        ).alignment(Alignment::Center)
 }
 
 fn get_no_items_found<'a>() -> Paragraph<'a> {

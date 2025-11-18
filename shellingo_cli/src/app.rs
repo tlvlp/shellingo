@@ -64,8 +64,11 @@ impl AppState {
         let selected_group = self.get_selected_group();
         selected_group.is_active = selected_group.is_active.not();
         if selected_group.is_active {
-            //load questions
+            // load questions
             selected_group.questions = read_all_questions_from_paths(selected_group.paths.clone());
+        } else {
+            // clear questions
+            selected_group.questions = vec![]
         }
         Ok(())
     }

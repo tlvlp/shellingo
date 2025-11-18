@@ -37,8 +37,6 @@ fn handle_question_selector_input(app: &mut AppState, code: KeyCode) -> Result<(
     match code {
         KeyCode::Up => app.previous_question(),
         KeyCode::Down => app.next_question(),
-        // KeyCode::Enter => app.edit_selected_question(),
-        // KeyCode::Char(' ') => app.edit_selected_question(),
         KeyCode::Tab => app.toggle_group_and_question_selectors(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),

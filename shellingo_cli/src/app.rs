@@ -6,7 +6,6 @@ use ratatui_widgets::table::TableState;
 use shellingo_core::question::Question;
 use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_paths};
 
-/// Screens of the Body
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum UiComponent {
     GroupSelector,
@@ -32,17 +31,14 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(args: Vec<String>) -> Self {
-        // Loaded question groups from paths passes as commandline arguments
         let paths = get_paths_from(args);
         let question_groups = collect_groups_from_multiple_paths(paths);
-
         let mut question_group_list_state = ListState::default();
         question_group_list_state.select_first();
         let mut question_table_state = TableState::default();
         question_table_state.select_first();
 
         Self {
-            // Default App State
             active_component: UiComponent::GroupSelector,
             question_groups,
             question_group_list_state,
@@ -62,7 +58,9 @@ impl AppState {
 
     pub fn toggle_group_active_and_load_questions(&mut self) -> Result<(), Box<dyn Error>> {
         let selected_group = self.get_selected_group();
+        // Toggle active state
         selected_group.is_active = selected_group.is_active.not();
+
         if selected_group.is_active {
             // load questions
             selected_group.questions = read_all_questions_from_paths(selected_group.paths.clone());

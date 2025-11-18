@@ -1,11 +1,18 @@
-use regex::{Regex};
+use regex::Regex;
 use shellingo_core::question::Question;
-use std::{ env, fs::{self}, path::PathBuf, sync::LazyLock};
+use std::{env, fs::{self}, path::PathBuf, sync::LazyLock};
 use std::collections::BTreeMap;
 use walkdir::{DirEntry, Error, WalkDir};
-use crate::app::QuestionGroupDetails;
 
 static MULTIPLE_WHITESPACES_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
+
+#[derive(Debug, Default, PartialEq, Clone)]
+pub struct QuestionGroupDetails {
+    pub group_name: String,
+    pub questions: Vec<Question>,
+    pub paths: Vec<PathBuf>,
+    pub is_active: bool,
+}
 
 /// Returns the paths passed in as commandline arguments or the current working directory if there was none
 pub fn get_paths_from(args: Vec<String>) -> Vec<PathBuf> {
@@ -274,3 +281,4 @@ mod tests {
         assert_eq!(expected, result);
     }
 }
+

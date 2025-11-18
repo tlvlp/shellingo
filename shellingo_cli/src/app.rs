@@ -1,29 +1,21 @@
-use ratatui_widgets::list::{ListState};
+use ratatui_widgets::list::ListState;
 use std::error::Error;
 use std::ops::Not;
-use std::path::PathBuf;
 use ratatui_widgets::table::TableState;
 use shellingo_core::question::Question;
-use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_paths};
+use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_paths, QuestionGroupDetails};
 
-#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum UiComponent {
     GroupSelector,
     QuestionSelector,
     ExitPopup,
 }
 
-#[derive(Debug, Default, PartialEq, Clone)]
-pub struct QuestionGroupDetails {
-    pub group_name: String,
-    pub questions: Vec<Question>,
-    pub paths: Vec<PathBuf>,
-    pub is_active: bool,
-}
-
 #[derive(Debug)]
 pub struct AppState {
-    pub active_component: UiComponent,
+    active_component: UiComponent,
+    last_active_component: UiComponent,
     pub question_groups: Vec<QuestionGroupDetails>,
     pub question_group_list_state: ListState,
     pub question_table_state: TableState,
@@ -40,10 +32,20 @@ impl AppState {
 
         Self {
             active_component: UiComponent::GroupSelector,
+            last_active_component: UiComponent::GroupSelector,
             question_groups,
             question_group_list_state,
             question_table_state,
         }
+    }
+
+    pub fn set_active_component(&mut self, component: UiComponent) {
+        self.last_active_component = self.active_component.clone();
+        self.active_component = component;
+    }
+
+    pub fn get_active_component(&mut self) -> UiComponent {
+        self.active_component.clone()
     }
 
     pub fn next_group(&mut self) -> Result<(), Box<dyn Error>> {
@@ -97,18 +99,26 @@ impl AppState {
 
     pub fn toggle_group_and_question_selectors(&mut self) -> Result<(), Box<dyn Error>> {
         if self.active_component == UiComponent::GroupSelector {
-            self.active_component = UiComponent::QuestionSelector;
+            self.set_active_component(UiComponent::QuestionSelector);
             self.question_table_state.select_first();
         } else {
-            self.active_component = UiComponent::GroupSelector;
+            self.set_active_component(UiComponent::GroupSelector);
             self.question_table_state.select(None);
         }
         Ok(())
     }
 
     pub fn open_exit_popup(&mut self) -> Result<(), Box<dyn Error>> {
-        self.active_component = UiComponent::ExitPopup;
-        // Todo implement actual exit confirmation popup
+        self.set_active_component(UiComponent::ExitPopup);
+        Ok(())
+    }
+    pub fn close_exit_popup(&mut self) -> Result<(), Box<dyn Error>> {
+        self.set_active_component(self.last_active_component.clone());
+        Ok(())
+    }
+
+
+    pub fn exit_app(&mut self) -> Result<(), Box<dyn Error>> {
         Err(Box::from("Exiting application."))
     }
 }

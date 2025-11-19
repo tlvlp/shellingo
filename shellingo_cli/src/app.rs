@@ -1,6 +1,7 @@
 use ratatui_widgets::list::ListState;
 use std::error::Error;
 use std::ops::Not;
+use ratatui_widgets::scrollbar::ScrollbarState;
 use ratatui_widgets::table::TableState;
 use shellingo_core::question::Question;
 use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_paths, QuestionGroupDetails};
@@ -24,25 +25,28 @@ pub struct AppState {
     last_active_component: UiComponent,
     pub question_groups: Vec<QuestionGroupDetails>,
     pub question_group_list_state: ListState,
+    pub question_group_list_scrollbar_state: ScrollbarState,
     pub question_table_state: TableState,
+    pub question_table_scrollbar_state: ScrollbarState,
 }
 
 impl AppState {
     pub fn new(args: Vec<String>) -> Self {
-        let paths = get_paths_from(args);
-        let question_groups = collect_groups_from_multiple_paths(paths);
-        let mut question_group_list_state = ListState::default();
-        question_group_list_state.select_first();
-        let mut question_table_state = TableState::default();
-        question_table_state.select_first();
+        let paths_from_program_args = get_paths_from(args);
 
-        Self {
+        let mut app = Self {
             active_component: UiComponent::GroupSelector,
             last_active_component: UiComponent::GroupSelector,
-            question_groups,
-            question_group_list_state,
-            question_table_state,
-        }
+            question_groups: collect_groups_from_multiple_paths(paths_from_program_args),
+            question_group_list_state: ListState::default(),
+            question_group_list_scrollbar_state: ScrollbarState::default(),
+            question_table_state: TableState::default(),
+            question_table_scrollbar_state: ScrollbarState::default(),
+        };
+
+        app.question_group_list_state.select_first();
+        app.question_table_state.select_first();
+        app
     }
 
     pub fn get_app_phase_for_active_component(&self) -> AppPhase {

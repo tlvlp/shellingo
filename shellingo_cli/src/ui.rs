@@ -101,6 +101,7 @@ fn get_question_group_list<'a>(app: &mut AppState) -> List<'a> {
         )
         .highlight_symbol("> ")
         .highlight_style(Style::new().fg(Color::Black).bg(Color::White))
+        .scroll_padding(1)
 }
 
 fn get_question_table<'a>(app: &mut AppState) -> Table<'a> {

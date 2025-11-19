@@ -1,14 +1,13 @@
 use crate::app::{AppPhase, AppState, UiComponent};
 use ratatui::prelude::Color;
 use ratatui::style::{Style};
-use ratatui::symbols::border::Set;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
-    symbols,
     widgets::{Block, Padding},
 };
 use ratatui::layout::{Alignment, Flex, Rect};
+use ratatui_widgets::borders::BorderType;
 use ratatui_widgets::clear::Clear;
 use ratatui_widgets::list::{List, ListItem};
 use ratatui_widgets::paragraph::Paragraph;
@@ -20,15 +19,11 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(3), Constraint::Min(0)])
         .split(frame.area());
-    let main_layout_header = main_layout[0];
+    let main_layout_title = main_layout[0];
     let main_layout_body = main_layout[1];
 
-    // Header
-    frame.render_widget(
-        Paragraph::new("[Tab] Switch between panes, [↑↓] navigate inside lists, [Enter/Space] select items")
-            .block(Block::bordered().title("[ Shellingo ]"))
-        , main_layout_header
-    );
+    // Title
+    frame.render_widget(get_title(), main_layout_title);
 
     // Body
     let body_layout = Layout::default()
@@ -57,6 +52,15 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
     }
 }
 
+fn get_title<'a>() -> Paragraph<'a> {
+    Paragraph::new("[Tab] switch between panes, [↑↓] navigate inside lists, [Enter/Space] select items")
+        .block(Block::bordered()
+            .title("[ Shellingo ]")
+            .border_type(BorderType::Plain)
+            .padding(Padding::horizontal(1))
+        )
+}
+
 fn get_exit_popup<'a>() -> Paragraph<'a> {
     Paragraph::new("Do you want to exit Shellingo?\n\
                         [Enter] Yes, [Esc] No")
@@ -64,7 +68,7 @@ fn get_exit_popup<'a>() -> Paragraph<'a> {
             .title("[ Exit ]")
             .padding(Padding::horizontal(1))
             .padding(Padding::vertical(1))
-            .border_set(symbols::border::DOUBLE)
+            .border_type(BorderType::Thick)
             .style(Style::default().fg(Color::Red))
         ).alignment(Alignment::Center)
 }
@@ -93,7 +97,7 @@ fn get_question_group_list<'a>(app: &mut AppState) -> List<'a> {
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))
-                .border_set(select_border_for_component(UiComponent::GroupSelector, app)),
+                .border_type(select_border_for_component(UiComponent::GroupSelector, app)),
         )
         .highlight_symbol("> ")
         .highlight_style(Style::new().fg(Color::Black).bg(Color::White))
@@ -102,23 +106,27 @@ fn get_question_group_list<'a>(app: &mut AppState) -> List<'a> {
 fn get_question_table<'a>(app: &mut AppState) -> Table<'a> {
     let rows = app.get_questions_for_selected_group()
         .into_iter()
-        .map(|q| Row::new([q.question, format!("{:?}", q.solutions)]));
-    let widths = [Constraint::Fill(2), Constraint::Fill(8)];
+        .map(|q| Row::new([
+            q.question,
+            format!("➔ {:?}", q.solutions)
+                .replace("{", "")
+                .replace("}", "")
+        ]));
+    let widths = [Constraint::Fill(1), Constraint::Fill(1)];
     Table::new(rows, widths)
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))
-                .border_set(select_border_for_component(UiComponent::QuestionSelector, app))
+                .border_type(select_border_for_component(UiComponent::QuestionSelector, app))
         )
-        .highlight_symbol("> ")
         .row_highlight_style(Style::new().fg(Color::Black).bg(Color::White))
 }
 
-fn select_border_for_component<'a>(component: UiComponent, app: &mut AppState) -> Set<'a> {
+fn select_border_for_component(component: UiComponent, app: &mut AppState) -> BorderType {
     if app.get_active_component() == component {
-        symbols::border::DOUBLE
+        BorderType::Thick
     } else {
-        symbols::border::PLAIN
+        BorderType::Plain
     }
 }
 

@@ -129,16 +129,13 @@ fn get_lines_from_string(contents: ProcessingStep<String>) -> Vec<ProcessingStep
 fn parse_question_from_line(line_contents: ProcessingStep<String>) -> Option<Question> {
     let line = line_contents.result;
     let location = line_contents.path;
-    if line.starts_with("#") {
-        return None; // Skip comments. 
+    if line.is_empty() || line.starts_with("#") || line.contains(r"^\s+$") {
+        return None; // Skip empty or commented out lines.
     };
     let split_q: Vec<&str> = line.split_terminator('|').collect();
     if split_q.len() != 2 {
         // TODO: Meaningful error handling
-        print!(
-            "Error, skipping malformed question. Location:'{}' Line: '{}'",
-            location, line
-        );
+        print!("Error, skipping malformed question. Location:'{location}' Line: '{line}'");
         return None;
     }
     let question = remove_extra_whitespaces(split_q[0]);

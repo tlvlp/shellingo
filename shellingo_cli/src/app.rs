@@ -74,11 +74,13 @@ impl AppState {
 
     pub fn next_group(&mut self) -> Result<(), Box<dyn Error>> {
         self.question_group_list_state.select_next();
+        self.question_group_list_scrollbar_state.next();
         Ok(())
     }
 
     pub fn previous_group(&mut self) -> Result<(), Box<dyn Error>> {
         self.question_group_list_state.select_previous();
+        self.question_group_list_scrollbar_state.prev();
         Ok(())
     }
 
@@ -113,11 +115,13 @@ impl AppState {
 
     pub fn previous_question(&mut self) -> Result<(), Box<dyn Error>> {
         self.question_table_state.select_previous();
+        self.question_table_scrollbar_state.prev();
         Ok(())
     }
 
     pub fn next_question(&mut self) -> Result<(), Box<dyn Error>> {
         self.question_table_state.select_next();
+        self.question_table_scrollbar_state.next();
         Ok(())
     }
 
@@ -125,6 +129,7 @@ impl AppState {
         if self.active_component == UiComponent::GroupSelector {
             self.set_active_component(UiComponent::QuestionSelector);
             self.question_table_state.select_first();
+            self.question_table_scrollbar_state.first();
         } else {
             self.set_active_component(UiComponent::GroupSelector);
             self.question_table_state.select(None);

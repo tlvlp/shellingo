@@ -1,20 +1,28 @@
 use crate::app::{AppState, UiComponent};
 use ratatui::crossterm::event;
-use ratatui::crossterm::event::KeyCode;
+use ratatui::crossterm::event::{KeyCode, KeyEvent, MouseEvent};
 use ratatui::crossterm::event::{Event};
 use std::error::Error;
 
 pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
     if event::poll(std::time::Duration::from_millis(100))? {
-        if let Event::Key(key_event) = event::read()? {
-            let code = key_event.code;
-            match app.get_active_component() {
-                UiComponent::GroupSelector => handle_group_selector_input(app, code),
-                UiComponent::QuestionSelector => handle_question_selector_input(app, code),
-                UiComponent::ExitPopup => handle_exit_popup_input(app, code),
-            }
-        } else {
-            Ok(())
+        match event::read()? {
+
+            Event::Key(KeyEvent { code, .. }) => {
+                match app.get_active_component() {
+                    UiComponent::GroupSelector => handle_group_selector_input(app, code),
+                    UiComponent::QuestionSelector => handle_question_selector_input(app, code),
+                    UiComponent::ExitPopup => handle_exit_popup_input(app, code),
+                }
+            },
+
+            // FIXME: Mouse events are not reported.
+            // Event::Mouse(MouseEvent { kind, column, row, modifiers }) => {
+            //     println!("{:?}, {:?}, {:?}, {:?}", column, row, kind, column);
+            //     Ok(())
+            // },
+
+            _ => Ok(())
         }
     } else {
         Ok(())

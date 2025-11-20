@@ -31,10 +31,9 @@ pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
 
 fn handle_group_selector_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {
     match code {
-        KeyCode::Up => app.previous_group(),
-        KeyCode::Down => app.next_group(),
-        KeyCode::Enter => app.toggle_group_active_and_load_questions(),
-        KeyCode::Char(' ') => app.toggle_group_active_and_load_questions(),
+        KeyCode::Up | KeyCode::Char('k') => app.previous_group(),
+        KeyCode::Down | KeyCode::Char('j') => app.next_group(),
+        KeyCode::Enter | KeyCode::Char(' ') => app.toggle_group_active_and_load_questions(),
         KeyCode::Tab => app.toggle_group_and_question_selectors(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),
@@ -43,8 +42,8 @@ fn handle_group_selector_input(app: &mut AppState, code: KeyCode) -> Result<(), 
 
 fn handle_question_selector_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {
     match code {
-        KeyCode::Up => app.previous_question(),
-        KeyCode::Down => app.next_question(),
+        KeyCode::Up | KeyCode::Char('k') => app.previous_question(),
+        KeyCode::Down | KeyCode::Char('j') => app.next_question(),
         KeyCode::Tab => app.toggle_group_and_question_selectors(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),

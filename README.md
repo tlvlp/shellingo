@@ -8,15 +8,33 @@ A simple command line tool for custom vocabulary practice.
  
 > Note: Currently it's a learning project, and not yet a functional tool.
 
+## How to get the app
+Either [Download the latest release for your OS](https://github.com/tlvlp/shellingo/releases),
+or build it from source:
+
+1. [install the rust toolchain](https://rust-lang.org/tools/install/).
+2. Clone this repo.
+3. Run the cargo build command in the `<repo_root>/shellingo_cli` directory of this repo:
+```
+cargo build --release
+```
+4. Find the app under the `<repo_root>/shellingo_cli/target/release/shellingo_cli`
+
+
 ## How to use 
 
-1. [Download the latest release for your OS](https://github.com/tlvlp/shellingo/releases)
-2. Create a subfolder named **questions** next to the executable. This is the configurable default path to store your questions in.
-3. Add questions (see the 'How to' section below)
-4. Run the tool with:
+1. [Download or build the app](#how-to-get-the-app)
+2. Download or [write your questions](#how-to-add-vocabulariesquestions) 
+3. Run the app:
 
+Without arguments (questions loaded from in or under the directory where the app is):
 ```shell
 ./shellingo
+```
+
+Or with one or multiple specific paths to search for the vocabulary files:
+```shell
+./shellingo /home/my_user/my_question_path /home/my_user/other_path/other_questions 
 ```
 
 ## Input paths
@@ -59,4 +77,4 @@ the elephant   likes  milk |  słoń  lubi  mleko
 
 # will be presented as:
 # the elephant likes milk: słoń lubi mleko
-```A command line vocabulary practice tool that
+```

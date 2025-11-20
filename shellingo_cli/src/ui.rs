@@ -137,7 +137,8 @@ fn get_question_group_list<'a>(app: &mut AppState) -> (List<'a>, usize) {
 fn get_new_scrollbar<'a>() -> Scrollbar<'a>  {
     Scrollbar::new(ScrollbarOrientation::VerticalRight)
         .track_symbol(None)
-        // .thumb_symbol("|")
+        .begin_symbol(None)
+        .end_symbol(None)
 }
 
 fn get_question_table<'a>(app: &mut AppState) -> (Table<'a>, usize) {

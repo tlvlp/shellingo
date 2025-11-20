@@ -1,6 +1,6 @@
 use crate::app::{AppState, UiComponent};
 use ratatui::crossterm::event;
-use ratatui::crossterm::event::{KeyCode, KeyEvent, MouseEvent};
+use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::crossterm::event::{Event};
 use std::error::Error;
 

@@ -83,7 +83,10 @@ impl AppState {
     }
 
     pub fn toggle_group_active_and_load_questions(&mut self) -> Result<(), Box<dyn Error>> {
-        let selected_group = self.get_selected_group();
+        let selected_group_op = self.get_selected_group_mut();
+        if selected_group_op.is_none() { return Ok(()) } //TODO: Proper error message for empty list.
+
+        let selected_group = selected_group_op.unwrap();
         // Toggle active state
         selected_group.is_active = selected_group.is_active.not();
 
@@ -98,7 +101,10 @@ impl AppState {
     }
 
     pub fn get_questions_for_selected_group(&mut self) -> Vec<Question> {
-        let selected = self.get_selected_group();
+        let selected_op = self.get_selected_group_mut();
+        if selected_op.is_none() { return vec![] }
+        let selected = selected_op.unwrap();
+
         if selected.is_active {
             selected.questions.clone()
         } else {
@@ -106,9 +112,9 @@ impl AppState {
         }
     }
 
-    fn get_selected_group(&mut self) -> &mut QuestionGroupDetails {
+    fn get_selected_group_mut(&mut self) -> Option<&mut QuestionGroupDetails> {
         let selected_group_pos = self.question_group_list_state.selected().unwrap_or(0);
-        self.question_groups.get_mut(selected_group_pos).unwrap()
+        self.question_groups.get_mut(selected_group_pos)
     }
 
     pub fn previous_question(&mut self) -> Result<(), Box<dyn Error>> {

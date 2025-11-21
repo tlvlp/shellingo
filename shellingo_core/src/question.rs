@@ -35,12 +35,12 @@ impl Question {
 }
 
 impl Question {
-    pub fn increment_correct_count(&mut self, amount: &u16) {
+    pub fn increment_correct_count(&mut self, amount: u16) {
         self.correct_count_round += amount;
         self.correct_count_sum += amount;
     }
 
-    pub fn increment_error_count(&mut self, amount: &u16) {
+    pub fn increment_error_count(&mut self, amount: u16) {
         self.error_count_round += amount;
         self.error_count_sum += amount;
     }

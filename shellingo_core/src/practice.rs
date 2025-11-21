@@ -1,8 +1,12 @@
+use std::sync::LazyLock;
 use rand::seq::SliceRandom;
+use regex::Regex;
 use crate::question::Question;
 
 pub const CLUE_REVEAL_PENALTY: u16 = 5;
 pub const ANSWER_REVEAL_PENALTY: u16 = 10;
+static REGEX_MULTIPLE_SPACES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
+static REGEX_SYMBOLS_TO_REMOVE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[?,!.:;]+").unwrap());
 
 pub fn randomize_questions(questions: &Vec<Question>) -> Vec<&Question> {
     let mut question_refs = questions.iter().collect::<Vec<&Question>>();
@@ -11,7 +15,7 @@ pub fn randomize_questions(questions: &Vec<Question>) -> Vec<&Question> {
 }
 
 pub fn reveal_clue_for_penalty(question: &mut Question) -> String {
-    question.increment_error_count(&CLUE_REVEAL_PENALTY);
+    question.increment_error_count(CLUE_REVEAL_PENALTY);
     question.answers.iter()
         .map(|answer|
             answer.chars()
@@ -25,7 +29,7 @@ pub fn reveal_clue_for_penalty(question: &mut Question) -> String {
 }
 
 pub fn reveal_answer_for_penalty(question: &mut Question) -> String {
-    question.increment_error_count(&ANSWER_REVEAL_PENALTY);
+    question.increment_error_count(ANSWER_REVEAL_PENALTY);
     question.answers.iter()
         .cloned()
         .reduce(|a, b| format!("{a} or {b}"))
@@ -44,16 +48,28 @@ pub fn get_hardest_questions_in_round(questions: &Vec<Question>, limit: usize) -
         .collect()
 }
 
+pub fn validate_attempt(attempt: &String, question: &mut Question) -> bool {
+    let cleaned_attempt = clean_string(attempt);
+    let is_success = question.answers.iter()
+        .map(|answer| clean_string(answer) == cleaned_attempt)
+        .reduce(|a, b| a || b)
+        .unwrap_or(false);
+    if is_success {
+        question.increment_correct_count(1)
+    } else {
+        question.increment_error_count(1)
+    }
+    is_success
+}
 
-// TODO methods:
-//  - fn clean_response_before_comparison
-//      .strip()
-//      .toLowerCase()
-//      .replaceAll("[?,!.:;]", "");
-//      .replaceAll("\\s{2,}", " ")
-//  - fn evaluate_response
+fn clean_string(response: &String) -> String {
+    let trimmed_lowercase = response
+        .trim()
+        .to_lowercase();
+    let single_space = REGEX_MULTIPLE_SPACES.replace_all(&trimmed_lowercase, " ");
+    REGEX_SYMBOLS_TO_REMOVE.replace_all(single_space.as_ref(), "").to_string()
 
-
+}
 
 
 #[cfg(test)]
@@ -166,9 +182,9 @@ mod tests {
         let mut q3 = Question::new(String::new(), String::from("q3"), String::new());
         let mut q4 = Question::new(String::new(), String::from("q3"), String::new());
         // Expected order: q4, q2, q3
-        q2.increment_error_count(&5);
-        q3.increment_error_count(&1);
-        q4.increment_error_count(&10);
+        q2.increment_error_count(5);
+        q3.increment_error_count(1);
+        q4.increment_error_count(10);
 
         let limit = 3;
 
@@ -177,6 +193,48 @@ mod tests {
 
         // When
         let actual = get_hardest_questions_in_round(&questions, limit);
+
+        // Then
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn is_attempt_successful_matches_answer() {
+        // Given
+        let mut question = Question::new(String::new(), String::from("q1"), String::new());
+        question.answers = HashSet::from(["answer one".to_string(), "answer two".to_string()]);
+        let attempt = "answer one".to_string();
+
+        // When
+        let actual = validate_attempt(&attempt, &mut question);
+
+        //Then
+        assert_eq!(actual, true);
+    }
+
+
+    #[test]
+    fn is_attempt_successful_no_answer_to_match() {
+        // Given
+        let mut question = Question::new(String::new(), String::from("q1"), String::new());
+        question.answers = HashSet::from(["answer one".to_string(), "answer two".to_string()]);
+        let attempt = "something else".to_string();
+
+        // When
+        let actual = validate_attempt(&attempt, &mut question);
+
+        //Then
+        assert_eq!(actual, false);
+    }
+
+    #[test]
+    fn test_clean_string_cases() {
+        // Given
+        let input = "  Correct Ans?,!.:;Wer  ".to_string();
+        let expected = "correct answer".to_string();
+
+        // When
+        let actual = clean_string(&input);
 
         // Then
         assert_eq!(actual, expected);

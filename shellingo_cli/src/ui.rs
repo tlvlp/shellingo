@@ -80,7 +80,7 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
 }
 
 fn get_title<'a>() -> Paragraph<'a> {
-    Paragraph::new("[Tab] switch between panes, [↑↓] navigate inside lists, [Enter/Space] select items")
+    Paragraph::new("[Tab] switch panes, [↑↓] navigate, [Enter/Space] select items, [P] start practice ")
         .block(Block::bordered()
             .title("[ Shellingo ]")
             .border_type(BorderType::Plain)

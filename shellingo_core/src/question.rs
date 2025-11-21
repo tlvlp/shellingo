@@ -2,9 +2,9 @@ use std::{collections::HashSet, hash::Hash};
 
 #[derive(Debug, Clone)]
 pub struct Question {
-    pub locations: HashSet<String>,
     pub question: String,
     pub solutions: HashSet<String>,
+    pub locations: HashSet<String>,
 
     pub correct_count_round: i32,
     pub error_count_round: i32,

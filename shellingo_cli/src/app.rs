@@ -150,4 +150,6 @@ impl AppState {
     pub fn exit_app(&mut self) -> Result<(), Box<dyn Error>> {
         Err(Box::from("Exiting application."))
     }
+
+
 }

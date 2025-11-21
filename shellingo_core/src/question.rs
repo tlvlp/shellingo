@@ -16,7 +16,7 @@ pub struct QuestionStats {
     pub correct_count_round: u16,
     pub error_count_round: u16,
     pub correct_count_sum: u16,
-    pub error_count_sum: u16, 
+    pub error_count_sum: u16,
 }
 
 impl Question {
@@ -53,7 +53,7 @@ impl Question {
             error_count_sum: self.error_count_sum,
         }
     }
-    
+
     pub fn reset_round_stats(&mut self) {
         self.correct_count_round = 0;
         self.error_count_round = 0;

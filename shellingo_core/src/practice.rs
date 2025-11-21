@@ -32,10 +32,20 @@ pub fn reveal_answer_for_penalty(question: &mut Question) -> String {
         .unwrap_or(format!("Cannot generate clue for the answer(s): '{:?}'", question.answers))
 }
 
+pub fn get_hardest_questions_in_round(questions: &Vec<Question>, limit: usize) -> Vec<&Question> {
+    let mut refs: Vec<&Question> = questions.iter().collect();
+    refs.sort_by(|a, b|
+        // Reverse sort
+        b.get_question_stats().error_count_round.clone()
+            .cmp(&a.get_question_stats().error_count_round.clone())
+    );
+    refs.into_iter()
+        .take(limit)
+        .collect()
+}
+
 
 // TODO methods:
-//  - fn reset_to_hardest_x <---- resetToHardest
-//  ~~~~~~~~~
 //  - fn clean_response_before_comparison
 //      .strip()
 //      .toLowerCase()
@@ -146,6 +156,30 @@ mod tests {
         // Then
         assert!(expected == actual || expected_variant == actual); // HashSet ordering can be random.
 
+    }
+
+    #[test]
+    fn test_get_hardest_questions_in_round() {
+        // Given
+        let q1 = Question::new(String::new(), String::from("q1"), String::new());
+        let mut q2 = Question::new(String::new(), String::from("q2"), String::new());
+        let mut q3 = Question::new(String::new(), String::from("q3"), String::new());
+        let mut q4 = Question::new(String::new(), String::from("q3"), String::new());
+        // Expected order: q4, q2, q3
+        q2.increment_error_count(&5);
+        q3.increment_error_count(&1);
+        q4.increment_error_count(&10);
+
+        let limit = 3;
+
+        let questions = vec![q1, q2, q3, q4];
+        let expected = vec![&questions[3], &questions[1], &questions[2]]; // Will drop q1, due to the limit.
+
+        // When
+        let actual = get_hardest_questions_in_round(&questions, limit);
+
+        // Then
+        assert_eq!(actual, expected);
     }
 
 }

@@ -5,6 +5,9 @@ mod app;
 mod events;
 mod question_parser;
 mod ui;
+mod ui_setup_phase;
+mod ui_practice_phase;
+mod ui_shared;
 
 fn main() -> std::io::Result<()> {
     ratatui::run(|terminal| {

@@ -1,18 +1,16 @@
 use crate::app::{AppPhase, AppState, UiComponent};
+use crate::{ ui_setup_phase, ui_practice_phase};
 use ratatui::prelude::Color;
-use ratatui::style::{Style};
+use ratatui::style::Style;
 use ratatui::{
-    Frame,
     layout::{Constraint, Direction, Layout},
     widgets::{Block, Padding},
+    Frame,
 };
-use ratatui::layout::{Alignment, Flex, Margin, Rect};
+use ratatui::layout::{Alignment, Flex, Rect};
 use ratatui_widgets::borders::BorderType;
 use ratatui_widgets::clear::Clear;
-use ratatui_widgets::list::{List, ListItem};
 use ratatui_widgets::paragraph::Paragraph;
-use ratatui_widgets::scrollbar::{Scrollbar, ScrollbarOrientation};
-use ratatui_widgets::table::{Row, Table};
 
 pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
     // Split the main layout
@@ -24,7 +22,10 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
     let main_layout_body = main_layout[1];
 
     // Title
-    frame.render_widget(get_title(), main_layout_title);
+    let title_block = Block::bordered()
+        .title("[ Shellingo ]")
+        .border_type(BorderType::Plain)
+        .padding(Padding::horizontal(1));
 
     // Body
     let body_layout = Layout::default()
@@ -36,37 +37,10 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
 
     match app.get_app_phase_for_active_component() {
         AppPhase::Setup => {
-            // LEFT - Groups + scrollbar
-            let (groups_list, groups_list_len) = get_question_group_list(app);
-            frame.render_stateful_widget(
-                groups_list,
-                body_layout_left,
-                &mut app.question_group_list_state
-            );
-            frame.render_stateful_widget(
-                get_new_scrollbar(),
-                body_layout_left.inner(Margin {vertical: 1, horizontal: 0}), // Draw inside the same area
-                &mut app.question_group_list_scrollbar_state.content_length(groups_list_len)
-                    .position(app.question_group_list_state.selected().unwrap_or(0)),
-            );
-
-            // RIGHT - Questions + scrollbar
-            let (questions_table, questions_table_len) = get_question_table(app);
-            frame.render_stateful_widget(
-                questions_table,
-                body_layout_right,
-                &mut app.question_table_state
-            );
-            frame.render_stateful_widget(
-                get_new_scrollbar(),
-                body_layout_right.inner(Margin {vertical: 1, horizontal: 0}), // Draw inside the same area
-                &mut app.question_table_scrollbar_state.content_length(questions_table_len)
-                    .position(app.question_table_state.selected().unwrap_or(0)),
-            );
+            ui_setup_phase::render_title_with_tooltips(frame, title_block, main_layout_title);
+            ui_setup_phase::render_group_list_with_scrollbar(app, frame, body_layout_left);
+            ui_setup_phase::render_question_table_with_scrollbar(app, frame, body_layout_right);
         }
-        // _ => {
-        //     frame.render_widget(get_no_items_found(), body_layout_left);
-        // }
     };
 
     // Exit popup
@@ -77,15 +51,6 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
         frame.render_widget(popup, popup_area);
 
     }
-}
-
-fn get_title<'a>() -> Paragraph<'a> {
-    Paragraph::new("[Tab] switch panes, [↑↓] navigate, [Enter/Space] select items, [P] start practice ")
-        .block(Block::bordered()
-            .title("[ Shellingo ]")
-            .border_type(BorderType::Plain)
-            .padding(Padding::horizontal(1))
-        )
 }
 
 fn get_exit_popup<'a>() -> Paragraph<'a> {
@@ -100,76 +65,7 @@ fn get_exit_popup<'a>() -> Paragraph<'a> {
         ).alignment(Alignment::Center)
 }
 
-// fn get_no_items_found<'a>() -> Paragraph<'a> {
-//     Paragraph::new("No items found")
-//         .block(Block::bordered()
-//                    .padding(Padding::horizontal(1))
-//                    .border_set(symbols::border::PLAIN),
-//         )
-// }
 
-fn get_question_group_list<'a>(app: &mut AppState) -> (List<'a>, usize) {
-    let list = List::new(
-        app.question_groups
-            .iter()
-            .map(| group_details| {
-                let selection_postfix = if group_details.is_active { " *"} else { "" };
-                ListItem::new(format!("{}{}",group_details.group_name.clone(), selection_postfix))
-                    .style(
-                        if group_details.is_active { Style::default().bold().fg(Color::Green) }
-                        else { Style::default() }
-                    )
-            })
-    )
-        .block(
-            Block::bordered()
-                .padding(Padding::horizontal(1))
-                .border_type(select_border_for_component(UiComponent::GroupSelector, app)),
-        )
-        .highlight_symbol("> ")
-        .highlight_style(Style::new().fg(Color::Black).bg(Color::White))
-        .scroll_padding(1);
-
-    let list_len = list.len();
-    (list, list_len)
-}
-
-fn get_new_scrollbar<'a>() -> Scrollbar<'a>  {
-    Scrollbar::new(ScrollbarOrientation::VerticalRight)
-        .track_symbol(None)
-        .begin_symbol(None)
-        .end_symbol(None)
-}
-
-fn get_question_table<'a>(app: &mut AppState) -> (Table<'a>, usize) {
-    let rows = app.get_questions_for_selected_group()
-        .into_iter()
-        .map(|q| Row::new([
-            q.question,
-            format!("➔ {:?}", q.answers)
-                .replace("{", "")
-                .replace("}", "")
-        ]));
-    let question_count = rows.len();
-    let widths = [Constraint::Fill(1), Constraint::Fill(1)];
-    let table = Table::new(rows, widths)
-        .block(
-            Block::bordered()
-                .padding(Padding::horizontal(1))
-                .border_type(select_border_for_component(UiComponent::QuestionSelector, app))
-        )
-        .row_highlight_style(Style::new().fg(Color::Black).bg(Color::White));
-
-    (table, question_count)
-}
-
-fn select_border_for_component(component: UiComponent, app: &mut AppState) -> BorderType {
-    if app.get_active_component() == component {
-        BorderType::Thick
-    } else {
-        BorderType::Plain
-    }
-}
 
 fn popup_area(area: Rect, x_len: u16, y_len: u16) -> Rect {
     let vertical = Layout::vertical([Constraint::Length(y_len)]).flex(Flex::Center);

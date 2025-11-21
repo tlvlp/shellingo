@@ -83,7 +83,7 @@ pub fn read_all_questions_from_paths(paths: Vec<PathBuf>) -> Vec<Question> {
         .fold(BTreeMap::new(), |mut acc, new_question| {
             let old_question = acc.entry(new_question.question.clone())
                 .or_insert(new_question.clone());
-            old_question.solutions = old_question.solutions.union(&new_question.solutions).cloned().collect();
+            old_question.answers = old_question.answers.union(&new_question.answers).cloned().collect();
             old_question.locations = old_question.locations.union(&new_question.locations).cloned().collect();
             acc
         })
@@ -139,8 +139,8 @@ fn parse_question_from_line(line_contents: ProcessingStep<String>) -> Option<Que
         return None;
     }
     let question = remove_extra_whitespaces(split_q[0]);
-    let solution = remove_extra_whitespaces(split_q[1]);
-    Some(Question::new(location, question, solution))
+    let answer = remove_extra_whitespaces(split_q[1]);
+    Some(Question::new(location, question, answer))
 }
 
 fn remove_extra_whitespaces(text: &str) -> String {
@@ -248,17 +248,10 @@ mod tests {
     fn same_question_with_different_answers_in_multiple_files_collected_to_a_single_question() {
         // Given
         let paths = vec![PathBuf::from("tests/fixtures/collect")];
-        let expected = vec![
-            Question {
-                question: "question".to_string(),
-                solutions: HashSet::from(["f0_q2 answer".to_string(), "f0_q1 answer".to_string(), "f1_q1 answer".to_string()]),
-                locations: HashSet::from(["tests/fixtures/collect/f1/f1_q1.sll".to_string(), "tests/fixtures/collect/f0_q2.sll".to_string(), "tests/fixtures/collect/f0_q1.sll".to_string()]),
-                correct_count_round: 0,
-                error_count_round: 0,
-                correct_count_sum: 0,
-                error_count_sum: 0,
-            }
-        ];
+        let mut question = Question::new("placeholder".to_string(), "question".to_string(),"placeholder ".to_string());
+        question.locations = HashSet::from(["tests/fixtures/collect/f1/f1_q1.sll".to_string(), "tests/fixtures/collect/f0_q2.sll".to_string(), "tests/fixtures/collect/f0_q1.sll".to_string()]);
+        question.answers = HashSet::from(["f0_q2 answer".to_string(), "f0_q1 answer".to_string(), "f1_q1 answer".to_string()]);
+        let expected = vec![question];
 
         // When
         let actual = read_all_questions_from_paths(paths);

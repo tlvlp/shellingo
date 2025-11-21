@@ -3,27 +3,60 @@ use std::{collections::HashSet, hash::Hash};
 #[derive(Debug, Clone)]
 pub struct Question {
     pub question: String,
-    pub solutions: HashSet<String>,
+    pub answers: HashSet<String>,
     pub locations: HashSet<String>,
 
-    pub correct_count_round: i32,
-    pub error_count_round: i32,
-    pub correct_count_sum: i32,
-    pub error_count_sum: i32,
+    correct_count_round: u16,
+    error_count_round: u16,
+    correct_count_sum: u16,
+    error_count_sum: u16,
+}
+
+pub struct QuestionStats {
+    pub correct_count_round: u16,
+    pub error_count_round: u16,
+    pub correct_count_sum: u16,
+    pub error_count_sum: u16, 
 }
 
 impl Question {
-    pub fn new(location: String, question: String, solution: String) -> Question {
+    pub fn new(location: String, question: String, answer: String) -> Question {
         Question {
             question,
             locations: HashSet::from([location]),
-            solutions: HashSet::from([solution]),
+            answers: HashSet::from([answer]),
 
             correct_count_round: 0,
             error_count_round: 0,
             correct_count_sum: 0,
             error_count_sum: 0,
         }
+    }
+}
+
+impl Question {
+    pub fn increment_correct_count(&mut self, amount: &u16) {
+        self.correct_count_round += amount;
+        self.correct_count_sum += amount;
+    }
+
+    pub fn increment_error_count(&mut self, amount: &u16) {
+        self.error_count_round += amount;
+        self.error_count_sum += amount;
+    }
+
+    pub fn get_question_stats(&self) -> QuestionStats {
+        QuestionStats {
+            correct_count_round: self.correct_count_round,
+            error_count_round: self.error_count_round,
+            correct_count_sum: self.correct_count_sum,
+            error_count_sum: self.error_count_sum,
+        }
+    }
+    
+    pub fn reset_round_stats(&mut self) {
+        self.correct_count_round = 0;
+        self.error_count_round = 0;
     }
 }
 

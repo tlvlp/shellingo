@@ -53,7 +53,7 @@ but it also takes an unrestricted number of arguments with paths to override the
 
 > Shellingo will read all files under the [Input paths](#input-paths). 
 > Make sure not to mix languages, or if you do indicate the language in each file name or question :)
-> All the questions will be presented in a random order. Each word will be repeated until a correct solution is given.
+> All the questions will be presented in a random order. Each word will be repeated until a correct answer is given.
 
 - Create a text file and add one word/question per row and provide the expected answer,
 separated with a pipe **|** character.

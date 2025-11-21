@@ -146,7 +146,7 @@ fn get_question_table<'a>(app: &mut AppState) -> (Table<'a>, usize) {
         .into_iter()
         .map(|q| Row::new([
             q.question,
-            format!("➔ {:?}", q.solutions)
+            format!("➔ {:?}", q.answers)
                 .replace("{", "")
                 .replace("}", "")
         ]));

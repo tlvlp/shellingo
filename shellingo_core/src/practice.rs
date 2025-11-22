@@ -36,8 +36,8 @@ pub fn reveal_answer_for_penalty(question: &mut Question) -> String {
         .unwrap_or(format!("Cannot generate clue for the answer(s): '{:?}'", question.answers))
 }
 
-pub fn get_hardest_questions_in_round(questions: &Vec<Question>, limit: usize) -> Vec<&Question> {
-    let mut refs: Vec<&Question> = questions.iter().collect();
+pub fn get_hardest_questions_in_round<'a>(questions: &Vec<&'a Question>, limit: usize) -> Vec<&'a Question> {
+    let mut refs: Vec<&Question> = questions.clone();
     refs.sort_by(|a, b|
         // Reverse sort
         b.get_question_stats().error_count_round.clone()
@@ -188,8 +188,8 @@ mod tests {
 
         let limit = 3;
 
-        let questions = vec![q1, q2, q3, q4];
-        let expected = vec![&questions[3], &questions[1], &questions[2]]; // Will drop q1, due to the limit.
+        let questions = vec![&q1, &q2, &q3, &q4];
+        let expected = vec![questions[3], questions[1], questions[2]]; // Will drop q1, due to the limit.
 
         // When
         let actual = get_hardest_questions_in_round(&questions, limit);

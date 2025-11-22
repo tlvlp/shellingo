@@ -4,6 +4,7 @@ use std::ops::Not;
 use ratatui_widgets::scrollbar::ScrollbarState;
 use ratatui_widgets::table::TableState;
 use strum::{EnumIter, EnumMessage, VariantArray};
+use shellingo_core::practice;
 use shellingo_core::question::Question;
 use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_paths, QuestionGroupDetails};
 
@@ -35,7 +36,7 @@ pub enum PracticeControlOptions {
 }
 
 #[derive(Debug)]
-pub struct AppState {
+pub struct AppState<'a> {
     active_component: UiComponent,
     last_active_component: UiComponent,
     pub question_groups: Vec<QuestionGroupDetails>,
@@ -44,9 +45,11 @@ pub struct AppState {
     pub question_table_state: TableState,
     pub question_table_scrollbar_state: ScrollbarState,
     pub practice_controls_list_state: ListState,
+    pub active_questions: Vec<&'a Question>,
+    pub filtered_active_questions: Vec<&'a Question>,
 }
 
-impl AppState {
+impl <'a> AppState<'a> {
     pub fn new(args: Vec<String>) -> Self {
         let paths_from_program_args = get_paths_from(args);
 
@@ -59,6 +62,8 @@ impl AppState {
             question_table_state: TableState::default(),
             question_table_scrollbar_state: ScrollbarState::default(),
             practice_controls_list_state: ListState::default(),
+            active_questions: vec![],
+            filtered_active_questions: vec![],
         };
 
         app.question_group_list_state.select_first();
@@ -167,6 +172,7 @@ impl AppState {
         Ok(())
     }
     pub fn navigate_to_practice_main(&mut self) -> Result<(), Box<dyn Error>> {
+        self.active_questions = self.get_all_active_questions();
         self.set_active_component(UiComponent::PracticeControls);
         Ok(())
     }
@@ -201,9 +207,15 @@ impl AppState {
     }
 
     fn filter_practice_data_to_hardest_in_round(&mut self, limit: usize) -> Result<(), Box<dyn Error>> {
-        let questions = todo!("filter selected questions from main map");
-        // practice::get_hardest_questions_in_round(&questions, limit);
+        self.filtered_active_questions = practice::get_hardest_questions_in_round(&self.active_questions, limit);
         Ok(())
+    }
+
+    fn get_all_active_questions(&'a mut self) -> Vec<&'a Question> {
+        self.question_groups.iter()
+            .filter(|q| q.is_active)
+            .flat_map(|q| &q.questions)
+            .collect()
     }
 
     pub fn activate_selected_practice_control(&mut self) -> Result<(), Box<dyn Error>> {

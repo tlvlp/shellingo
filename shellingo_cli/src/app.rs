@@ -3,7 +3,7 @@ use std::error::Error;
 use std::ops::Not;
 use ratatui_widgets::scrollbar::ScrollbarState;
 use ratatui_widgets::table::TableState;
-use strum::{EnumIter, EnumMessage};
+use strum::{EnumIter, EnumMessage, VariantArray};
 use shellingo_core::question::Question;
 use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_paths, QuestionGroupDetails};
 
@@ -22,15 +22,15 @@ pub enum UiComponent {
     ExitPopup,
 }
 
-#[derive(EnumIter, EnumMessage)]
+#[derive(EnumIter, EnumMessage,     VariantArray)]
 pub enum PracticeControlOptions {
     #[strum(message="Back to Setup")]
     BackToSetup,
     #[strum(message="Reset Practice")]
     ResetPractice,
-    #[strum(message="Focus on Hardest 5")]
+    #[strum(message="Try Hardest 5")]
     FocusOnHardest5,
-    #[strum(message="Focus on Hardest 10")]
+    #[strum(message="Try Hardest 10")]
     FocusOnHardest10,
 }
 
@@ -43,7 +43,7 @@ pub struct AppState {
     pub question_group_list_scrollbar_state: ScrollbarState,
     pub question_table_state: TableState,
     pub question_table_scrollbar_state: ScrollbarState,
-    pub control_options_list_state: ListState,
+    pub practice_controls_list_state: ListState,
 }
 
 impl AppState {
@@ -58,12 +58,12 @@ impl AppState {
             question_group_list_scrollbar_state: ScrollbarState::default(),
             question_table_state: TableState::default(),
             question_table_scrollbar_state: ScrollbarState::default(),
-            control_options_list_state: ListState::default(),
+            practice_controls_list_state: ListState::default(),
         };
 
         app.question_group_list_state.select_first();
         app.question_table_state.select_first();
-        app.control_options_list_state.select_first();
+        app.practice_controls_list_state.select_first();
         app
     }
 
@@ -171,6 +171,11 @@ impl AppState {
         Ok(())
     }
 
+    pub fn navigate_to_setup(&mut self) -> Result<(), Box<dyn Error>> {
+        self.set_active_component(UiComponent::GroupSelector);
+        Ok(())
+    }
+
     pub fn toggle_practice_panes(&mut self) -> Result<(), Box<dyn Error>> {
         if self.active_component == UiComponent::PracticeControls {
             self.set_active_component(UiComponent::PracticeMain);
@@ -180,6 +185,38 @@ impl AppState {
         }
         Ok(())
     }
+
+    pub fn select_previous_practice_control_menu_item(&mut self) -> Result<(), Box<dyn Error>> {
+        self.practice_controls_list_state.select_previous();
+        Ok(())
+    }
+
+    pub fn select_next_practice_control_menu_item(&mut self) -> Result<(), Box<dyn Error>> {
+        self.practice_controls_list_state.select_next();
+        Ok(())
+    }
+
+    fn reset_practice_round(&mut self) -> Result<(), Box<dyn Error>> {
+       todo!("reset the round counters on all the questions + use the originally selected list without filters")
+    }
+
+    fn filter_practice_data_to_hardest_in_round(&mut self, limit: usize) -> Result<(), Box<dyn Error>> {
+        let questions = todo!("filter selected questions from main map");
+        // practice::get_hardest_questions_in_round(&questions, limit);
+        Ok(())
+    }
+
+    pub fn activate_selected_practice_control(&mut self) -> Result<(), Box<dyn Error>> {
+        let selected_index = self.practice_controls_list_state.selected()
+            .unwrap_or(0);
+        match PracticeControlOptions::VARIANTS[selected_index] {
+            PracticeControlOptions::BackToSetup => self.navigate_to_setup(),
+            PracticeControlOptions::ResetPractice => self.reset_practice_round(),
+            PracticeControlOptions::FocusOnHardest5 => self.filter_practice_data_to_hardest_in_round(5),
+            PracticeControlOptions::FocusOnHardest10 => self.filter_practice_data_to_hardest_in_round(10),
+        }
+    }
+
 
     pub fn exit_app(&mut self) -> Result<(), Box<dyn Error>> {
         Err(Box::from("Exiting application."))

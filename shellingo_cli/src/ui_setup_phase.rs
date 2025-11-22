@@ -15,7 +15,7 @@ pub(crate) fn get_body_constraints() -> [Constraint; 2] {
 pub(crate) fn render_title_with_tooltips(frame: &mut Frame, title_block: Block,  draw_area: Rect) {
     frame.render_widget(
         Paragraph::new(
-            "[Tab] switch panes, [↑↓] navigate, [Enter/Space] select items, [P] start practice "
+            "[Tab] switch panes, [↑↓←→] navigate, [Enter/Space] select items, [P] start practice"
         ).block(title_block),
 
         draw_area

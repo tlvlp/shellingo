@@ -27,7 +27,7 @@ pub(crate) fn render_practice_controls(app: &mut AppState, frame: &mut Frame, dr
     frame.render_stateful_widget(
         get_practice_control_list(app),
         draw_area,
-        &mut app.control_options_list_state
+        &mut app.practice_controls_list_state
     );
 }
 

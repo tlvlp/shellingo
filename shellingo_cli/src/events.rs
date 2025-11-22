@@ -62,6 +62,9 @@ fn handle_question_selector_input(app: &mut AppState, key: KeyCode) -> Result<()
 fn handle_practice_controls_input(app: &mut AppState, key: KeyCode) -> Result<(), Box<dyn Error>> {
     match key {
         // TODO: Handle events
+        KeyCode::Up | KeyCode::Char('k') => app.select_previous_practice_control_menu_item(),
+        KeyCode::Down | KeyCode::Char('j') => app.select_next_practice_control_menu_item(),
+        KeyCode::Enter => app.activate_selected_practice_control(),
         KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.toggle_practice_panes(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),

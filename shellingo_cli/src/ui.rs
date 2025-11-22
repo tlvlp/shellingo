@@ -40,6 +40,11 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
             ui_setup_phase::render_title_with_tooltips(frame, title_block, main_layout_title);
             ui_setup_phase::render_group_list_with_scrollbar(app, frame, body_layout_left);
             ui_setup_phase::render_question_table_with_scrollbar(app, frame, body_layout_right);
+        },
+        AppPhase::Practice => {
+            ui_practice_phase::render_title_with_tooltips(frame, title_block, main_layout_title);
+            ui_practice_phase::render_practice_controls(app, frame, body_layout_left);
+            ui_practice_phase::render_practice_main(app, frame, body_layout_right);
         }
     };
 

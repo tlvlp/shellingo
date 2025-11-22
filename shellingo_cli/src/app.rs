@@ -9,13 +9,15 @@ use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from,
 #[derive(Debug, Clone)]
 pub enum AppPhase {
     Setup,
-    // Practice,
+    Practice,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum UiComponent {
     GroupSelector,
     QuestionSelector,
+    PracticeControls,
+    PracticeMain,
     ExitPopup,
 }
 
@@ -55,11 +57,11 @@ impl AppState {
 
     fn get_app_phase_for_component(&self, component: &UiComponent) -> AppPhase {
         match component {
-            UiComponent::GroupSelector => {AppPhase::Setup}
-            UiComponent::QuestionSelector => {AppPhase::Setup}
+            UiComponent::GroupSelector | UiComponent::QuestionSelector => AppPhase::Setup,
+            UiComponent::PracticeControls | UiComponent::PracticeMain => AppPhase::Practice,
             UiComponent::ExitPopup => {
                 self.get_app_phase_for_component(&self.last_active_component)
-            }
+            },
         }
     }
 
@@ -82,7 +84,7 @@ impl AppState {
         Ok(())
     }
 
-    pub fn toggle_group_active_and_load_questions(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn toggle_group_active_status_and_load_questions(&mut self) -> Result<(), Box<dyn Error>> {
         let selected_group_op = self.get_selected_group_mut();
         if selected_group_op.is_none() { return Ok(()) } //TODO: Proper error message for empty list.
 
@@ -127,7 +129,7 @@ impl AppState {
         Ok(())
     }
 
-    pub fn toggle_group_and_question_selectors(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn toggle_setup_panes(&mut self) -> Result<(), Box<dyn Error>> {
         if self.active_component == UiComponent::GroupSelector {
             self.set_active_component(UiComponent::QuestionSelector);
             self.question_table_state.select_first();
@@ -144,6 +146,20 @@ impl AppState {
     }
     pub fn close_exit_popup(&mut self) -> Result<(), Box<dyn Error>> {
         self.set_active_component(self.last_active_component.clone());
+        Ok(())
+    }
+    pub fn navigate_to_practice_main(&mut self) -> Result<(), Box<dyn Error>> {
+        self.set_active_component(UiComponent::PracticeControls);
+        Ok(())
+    }
+
+    pub fn toggle_practice_panes(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.active_component == UiComponent::PracticeControls {
+            self.set_active_component(UiComponent::PracticeMain);
+            //TODO select input component
+        } else {
+            self.set_active_component(UiComponent::PracticeControls);
+        }
         Ok(())
     }
 

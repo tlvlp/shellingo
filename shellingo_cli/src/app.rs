@@ -3,6 +3,7 @@ use std::error::Error;
 use std::ops::Not;
 use ratatui_widgets::scrollbar::ScrollbarState;
 use ratatui_widgets::table::TableState;
+use strum::{EnumIter, EnumMessage};
 use shellingo_core::question::Question;
 use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_paths, QuestionGroupDetails};
 
@@ -21,6 +22,18 @@ pub enum UiComponent {
     ExitPopup,
 }
 
+#[derive(EnumIter, EnumMessage)]
+pub enum PracticeControlOptions {
+    #[strum(message="Back to Setup")]
+    BackToSetup,
+    #[strum(message="Reset Practice")]
+    ResetPractice,
+    #[strum(message="Focus on Hardest 5")]
+    FocusOnHardest5,
+    #[strum(message="Focus on Hardest 10")]
+    FocusOnHardest10,
+}
+
 #[derive(Debug)]
 pub struct AppState {
     active_component: UiComponent,
@@ -30,6 +43,7 @@ pub struct AppState {
     pub question_group_list_scrollbar_state: ScrollbarState,
     pub question_table_state: TableState,
     pub question_table_scrollbar_state: ScrollbarState,
+    pub control_options_list_state: ListState,
 }
 
 impl AppState {
@@ -44,10 +58,12 @@ impl AppState {
             question_group_list_scrollbar_state: ScrollbarState::default(),
             question_table_state: TableState::default(),
             question_table_scrollbar_state: ScrollbarState::default(),
+            control_options_list_state: ListState::default(),
         };
 
         app.question_group_list_state.select_first();
         app.question_table_state.select_first();
+        app.control_options_list_state.select_first();
         app
     }
 
@@ -60,6 +76,7 @@ impl AppState {
             UiComponent::GroupSelector | UiComponent::QuestionSelector => AppPhase::Setup,
             UiComponent::PracticeControls | UiComponent::PracticeMain => AppPhase::Practice,
             UiComponent::ExitPopup => {
+                // Defined by the component the popup was opened from.
                 self.get_app_phase_for_component(&self.last_active_component)
             },
         }

@@ -8,27 +8,30 @@ use ratatui_widgets::table::{Row, Table};
 use crate::app::{AppState, UiComponent};
 use crate::ui_shared;
 
+pub(crate) fn get_body_constraints() -> [Constraint; 2] {
+    [Constraint::Percentage(20), Constraint::Percentage(80)]
+}
 
 pub(crate) fn render_title_with_tooltips(frame: &mut Frame, title_block: Block,  draw_area: Rect) {
     frame.render_widget(
         Paragraph::new(
             "[Tab] switch panes, [↑↓] navigate, [Enter/Space] select items, [P] start practice "
-        ).block(title_block), 
-        
+        ).block(title_block),
+
         draw_area
     );
 }
 
-pub(crate) fn render_group_list_with_scrollbar(app: &mut AppState, frame: &mut Frame, body_layout_left: Rect) {
+pub(crate) fn render_group_list_with_scrollbar(app: &mut AppState, frame: &mut Frame, draw_area: Rect) {
     let (groups_list, groups_list_len) = get_question_group_list(app);
     frame.render_stateful_widget(
         groups_list,
-        body_layout_left,
+        draw_area,
         &mut app.question_group_list_state
     );
     frame.render_stateful_widget(
         ui_shared::get_new_scrollbar(),
-        body_layout_left.inner(Margin {vertical: 1, horizontal: 0}), // Draw inside the same area
+        draw_area.inner(Margin {vertical: 1, horizontal: 0}), // Draw inside the same area
         &mut app.question_group_list_scrollbar_state.content_length(groups_list_len)
             .position(app.question_group_list_state.selected().unwrap_or(0)),
     );

@@ -13,6 +13,8 @@ use ratatui_widgets::clear::Clear;
 use ratatui_widgets::paragraph::Paragraph;
 
 pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
+    let app_phase = app.get_app_phase_for_active_component();
+    
     // Split the main layout
     let main_layout = Layout::default()
         .direction(Direction::Vertical)
@@ -21,21 +23,27 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
     let main_layout_title = main_layout[0];
     let main_layout_body = main_layout[1];
 
-    // Title
+    // Title layout
     let title_block = Block::bordered()
         .title("[ Shellingo ]")
         .border_type(BorderType::Plain)
         .padding(Padding::horizontal(1));
 
-    // Body
+    // Body layout
     let body_layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(20), Constraint::Percentage(80)])
+        .constraints(
+            match app_phase {
+                AppPhase::Setup => ui_setup_phase::get_body_constraints(),
+                AppPhase::Practice => ui_practice_phase::get_body_constraints(),
+            }
+        )
         .split(main_layout_body);
     let body_layout_left = body_layout[0];
     let body_layout_right = body_layout[1];
 
-    match app.get_app_phase_for_active_component() {
+    // Render contents
+    match app_phase {
         AppPhase::Setup => {
             ui_setup_phase::render_title_with_tooltips(frame, title_block, main_layout_title);
             ui_setup_phase::render_group_list_with_scrollbar(app, frame, body_layout_left);

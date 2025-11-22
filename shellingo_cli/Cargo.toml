@@ -7,6 +7,7 @@ edition = "2024"
 shellingo_core = { path = "../shellingo_core" }
 walkdir = "2.5.0"
 regex = "1.10.6"
+strum = { version = "0.27", features = ["derive"] }
 # TUI
 ratatui = { version = "0.30.0-beta.0", features = ["crossterm"] }
 ratatui-widgets = { version = "0.3.0-beta.0" }

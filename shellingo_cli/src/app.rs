@@ -132,10 +132,11 @@ impl AppState {
     pub fn toggle_setup_panes(&mut self) -> Result<(), Box<dyn Error>> {
         if self.active_component == UiComponent::GroupSelector {
             self.set_active_component(UiComponent::QuestionSelector);
+            if self.question_table_state.selected().is_none() {
             self.question_table_state.select_first();
+            }
         } else {
             self.set_active_component(UiComponent::GroupSelector);
-            self.question_table_state.select(None);
         }
         Ok(())
     }

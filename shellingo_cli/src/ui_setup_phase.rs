@@ -39,11 +39,11 @@ pub(crate) fn render_group_list_with_scrollbar(app: &mut AppState, frame: &mut F
 
 fn get_question_group_list<'a>(app: &mut AppState) -> (List<'a>, usize) {
     let list = List::new(
-        app.question_groups
+        app.questions_by_groups
             .iter()
-            .map(| group_details| {
+            .map(| (group_name, group_details)| {
                 let selection_postfix = if group_details.is_active { " *"} else { "" };
-                ListItem::new(format!("{}{}",group_details.group_name.clone(), selection_postfix))
+                ListItem::new(format!("{}{}",group_name.clone(), selection_postfix))
                     .style(
                         if group_details.is_active { Style::default().bold().fg(Color::Green) }
                         else { Style::default() }
@@ -82,8 +82,8 @@ fn get_question_table<'a>(app: &mut AppState) -> (Table<'a>, usize) {
     let rows = app.get_questions_for_selected_group()
         .into_iter()
         .map(|q| Row::new([
-            q.question,
-            format!("➔ {:?}", q.answers)
+            q.borrow().question.clone(),
+            format!("➔ {:?}", q.borrow().answers)
                 .replace("{", "")
                 .replace("}", "")
         ]));

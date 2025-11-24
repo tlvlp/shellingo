@@ -12,13 +12,6 @@ pub struct Question {
     error_count_sum: u16,
 }
 
-pub struct QuestionStats {
-    pub correct_count_round: u16,
-    pub error_count_round: u16,
-    pub correct_count_sum: u16,
-    pub error_count_sum: u16,
-}
-
 impl Question {
     pub fn new(location: String, question: String, answer: String) -> Question {
         Question {
@@ -45,18 +38,25 @@ impl Question {
         self.error_count_sum += amount;
     }
 
-    pub fn get_question_stats(&self) -> QuestionStats {
-        QuestionStats {
-            correct_count_round: self.correct_count_round,
-            error_count_round: self.error_count_round,
-            correct_count_sum: self.correct_count_sum,
-            error_count_sum: self.error_count_sum,
-        }
-    }
-
     pub fn reset_round_stats(&mut self) {
         self.correct_count_round = 0;
         self.error_count_round = 0;
+    }
+
+    pub fn get_error_count_for_round(&self) -> u16 {
+        self.error_count_round.clone()
+    }
+
+    pub fn get_correct_count_for_round(&self) -> u16 {
+        self.correct_count_round.clone()
+    }
+
+    pub fn get_error_count_sum(&self) -> u16 {
+        self.error_count_sum.clone()
+    }
+
+    pub fn get_correct_count_sum(&self) -> u16 {
+        self.correct_count_sum.clone()
     }
 }
 

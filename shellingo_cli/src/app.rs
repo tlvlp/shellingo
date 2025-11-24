@@ -1,12 +1,15 @@
+use std::cell::RefCell;
+use std::collections::{BTreeMap};
 use ratatui_widgets::list::ListState;
 use std::error::Error;
 use std::ops::Not;
+use std::rc::Rc;
 use ratatui_widgets::scrollbar::ScrollbarState;
 use ratatui_widgets::table::TableState;
 use strum::{EnumIter, EnumMessage, VariantArray};
 use shellingo_core::practice;
 use shellingo_core::question::Question;
-use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_paths, QuestionGroupDetails};
+use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_all_paths, QuestionGroup};
 
 #[derive(Debug, Clone)]
 pub enum AppPhase {
@@ -38,34 +41,45 @@ pub enum PracticeControlOptions {
 }
 
 #[derive(Debug)]
-pub struct AppState<'a> {
+pub struct AppState {
     active_component: UiComponent,
     last_active_component: UiComponent,
-    pub question_groups: Vec<QuestionGroupDetails>,
+    pub questions_by_groups: BTreeMap<String, QuestionGroup>,
+    pub group_names_by_indices: BTreeMap<usize, String>,
+    pub active_questions: Vec<Rc<RefCell<Question>>>,
+    pub filtered_questions: Vec<Rc<RefCell<Question>>>,
+
     pub question_group_list_state: ListState,
     pub question_group_list_scrollbar_state: ScrollbarState,
+
     pub question_table_state: TableState,
     pub question_table_scrollbar_state: ScrollbarState,
+
     pub practice_controls_list_state: ListState,
-    pub active_questions: Vec<&'a Question>,
-    pub filtered_active_questions: Vec<&'a Question>,
 }
 
-impl <'a> AppState<'a> {
+impl AppState {
     pub fn new(args: Vec<String>) -> Self {
         let paths_from_program_args = get_paths_from(args);
+
+        // Workaround to map the indices of groups,
+        // as RataTUI's List widget implementation can only return the index of a selected group.
+        // BTreeMaps guarantee the fix order of groups in the main map to match the index map.
+        let (questions_by_groups, group_names_by_indices) =
+            collect_groups_from_multiple_paths(paths_from_program_args);
 
         let mut app = Self {
             active_component: UiComponent::GroupSelector,
             last_active_component: UiComponent::GroupSelector,
-            question_groups: collect_groups_from_multiple_paths(paths_from_program_args),
+            questions_by_groups,
+            group_names_by_indices,
+            active_questions: vec![],
+            filtered_questions: vec![],
             question_group_list_state: ListState::default(),
             question_group_list_scrollbar_state: ScrollbarState::default(),
             question_table_state: TableState::default(),
             question_table_scrollbar_state: ScrollbarState::default(),
             practice_controls_list_state: ListState::default(),
-            active_questions: vec![],
-            filtered_active_questions: vec![],
         };
 
         app.question_group_list_state.select_first();
@@ -109,7 +123,8 @@ impl <'a> AppState<'a> {
     }
 
     pub fn toggle_group_active_status_and_load_questions(&mut self) -> Result<(), Box<dyn Error>> {
-        let selected_group_op = self.get_selected_group_mut();
+        let selected_group_name = self.get_selected_group_name().clone();
+        let selected_group_op = self.questions_by_groups.get_mut(&selected_group_name);
         if selected_group_op.is_none() { return Ok(()) } //TODO: Proper error message for empty list.
 
         let selected_group = selected_group_op.unwrap();
@@ -118,29 +133,31 @@ impl <'a> AppState<'a> {
 
         if selected_group.is_active {
             // load questions
-            selected_group.questions = read_all_questions_from_paths(selected_group.paths.clone());
+            let mut questions = read_all_questions_from_all_paths(&selected_group.paths);
+            selected_group.questions.append(&mut questions);
         } else {
             // clear questions
-            selected_group.questions = vec![]
+            selected_group.questions.clear();
         }
         Ok(())
     }
 
-    pub fn get_questions_for_selected_group(&mut self) -> Vec<Question> {
-        let selected_op = self.get_selected_group_mut();
-        if selected_op.is_none() { return vec![] }
-        let selected = selected_op.unwrap();
-
-        if selected.is_active {
-            selected.questions.clone()
+    pub fn get_questions_for_selected_group(&mut self) -> Vec<Rc<RefCell<Question>>> {
+        let selected_group_name = self.get_selected_group_name().clone();
+        let group_op = self.questions_by_groups.get_mut(&selected_group_name);
+        if group_op.is_none() { return vec![] }
+        let group = group_op.unwrap();
+        if group.is_active {
+            group.questions.iter().cloned().collect() //note: Rc::clone() points to the same object
         } else {
             vec![]
         }
     }
 
-    fn get_selected_group_mut(&mut self) -> Option<&mut QuestionGroupDetails> {
+    fn get_selected_group_name(&mut self) -> &String {
         let selected_group_pos = self.question_group_list_state.selected().unwrap_or(0);
-        self.question_groups.get_mut(selected_group_pos)
+        self.group_names_by_indices.get(&selected_group_pos)
+            .expect(format!("Can't find selected group at position {selected_group_pos}").as_str())
     }
 
     pub fn previous_question(&mut self) -> Result<(), Box<dyn Error>> {
@@ -209,14 +226,14 @@ impl <'a> AppState<'a> {
     }
 
     fn filter_practice_data_to_hardest_in_round(&mut self, limit: usize) -> Result<(), Box<dyn Error>> {
-        self.filtered_active_questions = practice::get_hardest_questions_in_round(&self.active_questions, limit);
+        self.active_questions = practice::get_hardest_questions_in_round(&self.active_questions, limit);
         Ok(())
     }
 
-    fn get_all_active_questions(&'a mut self) -> Vec<&'a Question> {
-        self.question_groups.iter()
-            .filter(|q| q.is_active)
-            .flat_map(|q| &q.questions)
+    fn get_all_active_questions(&mut self) -> Vec<Rc<RefCell<Question>>> {
+        self.questions_by_groups.values()
+            .filter(|group| group.is_active)
+            .flat_map(|group| group.questions.iter().cloned())
             .collect()
     }
 
@@ -224,10 +241,11 @@ impl <'a> AppState<'a> {
         let selected_index = self.practice_controls_list_state.selected()
             .unwrap_or(0);
         match PracticeControlOptions::VARIANTS[selected_index] {
-            PracticeControlOptions::BackToSetup => self.navigate_to_setup(),
-            PracticeControlOptions::ResetPractice => self.reset_practice_round(),
-            PracticeControlOptions::FocusOnHardest5 => self.filter_practice_data_to_hardest_in_round(5),
-            PracticeControlOptions::FocusOnHardest10 => self.filter_practice_data_to_hardest_in_round(10),
+            PracticeControlOptions::EndPractice => self.navigate_to_setup(),
+            PracticeControlOptions::ResetStats => self.reset_practice_round(),
+            PracticeControlOptions::TryHardest5 => self.filter_practice_data_to_hardest_in_round(5),
+            PracticeControlOptions::TryHardest10 => self.filter_practice_data_to_hardest_in_round(10),
+            PracticeControlOptions::TryAll => todo!(),
         }
     }
 

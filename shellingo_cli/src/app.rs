@@ -25,14 +25,16 @@ pub enum UiComponent {
 
 #[derive(EnumIter, EnumMessage,     VariantArray)]
 pub enum PracticeControlOptions {
-    #[strum(message="Back to Setup")]
-    BackToSetup,
-    #[strum(message="Reset Practice")]
-    ResetPractice,
+    #[strum(message="End Practice")]
+    EndPractice,
+    #[strum(message="Reset Stats")]
+    ResetStats,
+    #[strum(message="Try All")]
+    TryAll,
     #[strum(message="Try Hardest 5")]
-    FocusOnHardest5,
+    TryHardest5,
     #[strum(message="Try Hardest 10")]
-    FocusOnHardest10,
+    TryHardest10,
 }
 
 #[derive(Debug)]

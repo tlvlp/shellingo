@@ -47,7 +47,6 @@ pub struct AppState {
     pub questions_by_groups: BTreeMap<String, QuestionGroup>,
     pub group_names_by_indices: BTreeMap<usize, String>,
     pub active_questions: Vec<Rc<RefCell<Question>>>,
-    pub filtered_questions: Vec<Rc<RefCell<Question>>>,
 
     pub question_group_list_state: ListState,
     pub question_group_list_scrollbar_state: ScrollbarState,
@@ -74,7 +73,6 @@ impl AppState {
             questions_by_groups,
             group_names_by_indices,
             active_questions: vec![],
-            filtered_questions: vec![],
             question_group_list_state: ListState::default(),
             question_group_list_scrollbar_state: ScrollbarState::default(),
             question_table_state: TableState::default(),

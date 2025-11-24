@@ -1,8 +1,9 @@
 use std::any::Any;
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Margin, Rect};
+use ratatui::layout::{Constraint, Rect};
 use ratatui::prelude::{Color, Style};
 use ratatui_widgets::block::{Block, Padding};
+use ratatui::text::{Line};
 use ratatui_widgets::list::{List, ListItem};
 use ratatui_widgets::paragraph::Paragraph;
 use strum::{EnumMessage, IntoEnumIterator};
@@ -50,7 +51,9 @@ fn get_practice_control_list<'a>(app: &mut AppState) -> List<'a>{
 }
 
 pub(crate) fn render_practice_main(app: &mut AppState, frame: &mut Frame, draw_area: Rect) {
-    let placeholder = Paragraph::new("Placeholder")
+    let placeholder = Paragraph::new(
+        app.active_questions.iter().cloned().map(|q| Line::from(q.borrow().question.clone())).collect::<Vec<Line>>()
+    )
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))

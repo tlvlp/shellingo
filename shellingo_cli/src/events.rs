@@ -38,11 +38,11 @@ pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
 
 fn handle_group_selector_input(app: &mut AppState, key: KeyCode) -> Result<(), Box<dyn Error>> {
     match key {
-        KeyCode::Up | KeyCode::Char('k') => app.previous_group(),
-        KeyCode::Down | KeyCode::Char('j') => app.next_group(),
-        KeyCode::Enter | KeyCode::Char(' ') => app.toggle_group_active_status_and_load_questions(),
+        KeyCode::Up | KeyCode::Char('k') => app.setup_previous_group(),
+        KeyCode::Down | KeyCode::Char('j') => app.setup_next_group(),
+        KeyCode::Enter | KeyCode::Char(' ') => app.setup_toggle_group_active_status_and_load_questions(),
         KeyCode::Char('p') => app.navigate_to_practice_main(),
-        KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.toggle_setup_panes(),
+        KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.setup_toggle_panes(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),
     }
@@ -50,10 +50,10 @@ fn handle_group_selector_input(app: &mut AppState, key: KeyCode) -> Result<(), B
 
 fn handle_question_selector_input(app: &mut AppState, key: KeyCode) -> Result<(), Box<dyn Error>> {
     match key {
-        KeyCode::Up | KeyCode::Char('k') => app.previous_question(),
-        KeyCode::Down | KeyCode::Char('j') => app.next_question(),
+        KeyCode::Up | KeyCode::Char('k') => app.setup_previous_question(),
+        KeyCode::Down | KeyCode::Char('j') => app.setup_next_question(),
         KeyCode::Char('p') => app.navigate_to_practice_main(),
-        KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.toggle_setup_panes(),
+        KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.setup_toggle_panes(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),
     }
@@ -62,10 +62,10 @@ fn handle_question_selector_input(app: &mut AppState, key: KeyCode) -> Result<()
 fn handle_practice_controls_input(app: &mut AppState, key: KeyCode) -> Result<(), Box<dyn Error>> {
     match key {
         // TODO: Handle events
-        KeyCode::Up | KeyCode::Char('k') => app.select_previous_practice_control_menu_item(),
-        KeyCode::Down | KeyCode::Char('j') => app.select_next_practice_control_menu_item(),
-        KeyCode::Enter => app.activate_selected_practice_control(),
-        KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.toggle_practice_panes(),
+        KeyCode::Up | KeyCode::Char('k') => app.practice_select_previous_menu_item(),
+        KeyCode::Down | KeyCode::Char('j') => app.practice_select_next_menu_item(),
+        KeyCode::Enter => app.practice_activate_selected_control(),
+        KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.practice_toggle_panes(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),
     }
@@ -74,7 +74,7 @@ fn handle_practice_controls_input(app: &mut AppState, key: KeyCode) -> Result<()
 fn handle_practice_main_input(app: &mut AppState, key: KeyCode) -> Result<(), Box<dyn Error>> {
     match key {
         // TODO: Handle events
-        KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.toggle_practice_panes(),
+        KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.practice_toggle_panes(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),
     }

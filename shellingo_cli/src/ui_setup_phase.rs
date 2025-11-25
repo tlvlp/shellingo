@@ -79,7 +79,7 @@ pub(crate) fn render_question_table_with_scrollbar(app: &mut AppState, frame: &m
 }
 
 fn get_question_table<'a>(app: &mut AppState) -> (Table<'a>, usize) {
-    let rows = app.get_questions_for_selected_group()
+    let rows = app.setup_get_questions_for_selected_group()
         .into_iter()
         .map(|q| Row::new([
             q.borrow().question.clone(),

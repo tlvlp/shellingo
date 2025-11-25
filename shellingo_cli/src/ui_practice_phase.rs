@@ -33,37 +33,40 @@ pub(crate) fn render_practice_controls(app: &mut AppState, frame: &mut Frame, dr
 }
 
 fn get_practice_control_list<'a>(app: &mut AppState) -> List<'a>{
+    let (border, style) = ui_shared::get_style_for_component(UiComponent::PracticeControls, app);
     let controls = PracticeControlOptions::iter()
         .map(|control | {
             let readable_control_name = control.get_message().unwrap().to_string();
-            ListItem::new(readable_control_name)
+            ListItem::new(readable_control_name).style(style)
         })
         .collect::<Vec<ListItem>>();
     List::new(controls)
     .block(
         Block::bordered()
             .padding(Padding::horizontal(1))
-            .border_type(ui_shared::select_border_for_component(UiComponent::PracticeControls, app)),
+            .border_type(border),
     )
         .highlight_symbol("> ")
-        .highlight_style(Style::new().fg(Color::Black).bg(Color::White))
+        .highlight_style(style.fg(Color::Black).bg(Color::White))
         .scroll_padding(1)
 }
 
 pub(crate) fn render_practice_main(app: &mut AppState, frame: &mut Frame, draw_area: Rect) {
     // TODO:
-    //  - New object to track RoundState 
-    //          - round_questions: Vec<Rc<RefCell<Question>>> --> init from app.active_questions + randomized 
+    //  - New object to track RoundState
+    //          - round_questions: Vec<Rc<RefCell<Question>>> --> init from app.active_questions + randomized
     //          - current_question: u16 = 0 (index of round_question)
     //          - fn restart_round() --> randomize + reset current_question to 0
-    //          - fn filters.. ---> filter and override round_questions 
+    //          - fn filters.. ---> filter and override round_questions
+    let (border, style) = ui_shared::get_style_for_component(UiComponent::PracticeMain, app);
     let placeholder = Paragraph::new(
         app.active_questions.iter().cloned().map(|q| Line::from(q.borrow().question.clone())).collect::<Vec<Line>>()
     )
+        .style(style)
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))
-                .border_type(ui_shared::select_border_for_component(UiComponent::PracticeMain, app))
+                .border_type(border)
         );
     frame.render_widget(placeholder, draw_area);
 

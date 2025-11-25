@@ -1,3 +1,4 @@
+use ratatui::crossterm::style::Stylize;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Margin, Rect};
 use ratatui::prelude::{Color, Style};
@@ -38,6 +39,7 @@ pub(crate) fn render_group_list_with_scrollbar(app: &mut AppState, frame: &mut F
 }
 
 fn get_question_group_list<'a>(app: &mut AppState) -> (List<'a>, usize) {
+    let (border, style) = ui_shared::get_style_for_component(UiComponent::GroupSelector, app);
     let list = List::new(
         app.questions_by_groups
             .iter()
@@ -45,18 +47,18 @@ fn get_question_group_list<'a>(app: &mut AppState) -> (List<'a>, usize) {
                 let selection_postfix = if group_details.is_active { " *"} else { "" };
                 ListItem::new(format!("{}{}",group_name.clone(), selection_postfix))
                     .style(
-                        if group_details.is_active { Style::default().bold().fg(Color::Green) }
-                        else { Style::default() }
+                        if group_details.is_active { style.bold().fg(Color::Green) }
+                        else { style }
                     )
             })
     )
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))
-                .border_type(ui_shared::select_border_for_component(UiComponent::GroupSelector, app)),
+                .border_type(border),
         )
         .highlight_symbol("> ")
-        .highlight_style(Style::new().fg(Color::Black).bg(Color::White))
+        .highlight_style(style.fg(Color::Black).bg(Color::White))
         .scroll_padding(1);
 
     let list_len = list.len();
@@ -79,13 +81,15 @@ pub(crate) fn render_question_table_with_scrollbar(app: &mut AppState, frame: &m
 }
 
 fn get_question_table<'a>(app: &mut AppState) -> (Table<'a>, usize) {
+    let (border, style) = ui_shared::get_style_for_component(UiComponent::QuestionSelector, app);
     let rows = app.setup_get_questions_for_selected_group()
         .into_iter()
         .map(|q| Row::new([
-            q.borrow().question.clone(),
-            format!("➔ {:?}", q.borrow().answers)
-                .replace("{", "")
-                .replace("}", "")
+            q.borrow().question.clone(), {
+                format!("➔ {:?}", q.borrow().answers)
+                    .replace("{", "")
+                    .replace("}", "")
+            }
         ]));
     let question_count = rows.len();
     let widths = [Constraint::Fill(1), Constraint::Fill(1)];
@@ -93,9 +97,9 @@ fn get_question_table<'a>(app: &mut AppState) -> (Table<'a>, usize) {
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))
-                .border_type(ui_shared::select_border_for_component(UiComponent::QuestionSelector, app))
+                .border_type(border)
         )
-        .row_highlight_style(Style::new().fg(Color::Black).bg(Color::White));
+        .row_highlight_style(style.fg(Color::Black).bg(Color::White)).style(style);
 
     (table, question_count)
 }

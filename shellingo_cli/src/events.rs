@@ -75,6 +75,7 @@ fn handle_practice_main_input(app: &mut AppState, key: KeyCode) -> Result<(), Bo
     match key {
         // TODO: Handle events
         KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.practice_toggle_panes(),
+        KeyCode::Enter => app.practice_set_next_question_in_round(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),
     }

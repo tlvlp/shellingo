@@ -1,23 +1,22 @@
-use std::any::Any;
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Rect};
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::prelude::{Color, Style};
 use ratatui_widgets::block::{Block, Padding};
-use ratatui::text::{Line};
+use ratatui_widgets::borders::BorderType;
 use ratatui_widgets::list::{List, ListItem};
 use ratatui_widgets::paragraph::Paragraph;
 use strum::{EnumMessage, IntoEnumIterator};
 use crate::app::{AppState, PracticeControlOptions, UiComponent};
-use crate::ui_shared;
+use crate::{ui_shared};
 
 pub(crate) fn get_body_constraints() -> [Constraint; 2] {
-    [Constraint::Percentage(10), Constraint::Percentage(90)]
+    [Constraint::Length(22), Constraint::Fill(1)]
 }
 
 pub(crate) fn render_title_with_tooltips(frame: &mut Frame, title_block: Block,  draw_area: Rect) {
     frame.render_widget(
         Paragraph::new(
-            "[Tab] switch panes, [↑↓] navigate"
+            "[Tab] switch panes, [↑↓] navigate, [Enter] check answer"
         ).block(title_block),
 
         draw_area
@@ -53,15 +52,51 @@ fn get_practice_control_list<'a>(app: &mut AppState) -> List<'a>{
 
 pub(crate) fn render_practice_main(app: &mut AppState, frame: &mut Frame, draw_area: Rect) {
     let (border, style) = ui_shared::get_style_for_component(UiComponent::PracticeMain, app);
-    let placeholder = Paragraph::new(
-        app.round_questions.iter().cloned().map(|q| Line::from(q.borrow().question.clone())).collect::<Vec<Line>>()
-    )
+    let practice_main_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(20), Constraint::Percentage(60), Constraint::Percentage(200)] )
+        .split(draw_area);
+    let practice_main_layout_question = practice_main_layout[0];
+    let practice_main_layout_answer = practice_main_layout[1];
+    let practice_main_layout_status = practice_main_layout[2];
+
+    let question = app.practice_get_current_question_in_round()
+        .borrow_mut()
+        .clone();
+    let question_text = question.question;
+
+    frame.render_widget(get_question_box(question_text, style, border), practice_main_layout_question);
+    frame.render_widget(get_answer_box("Answer placeholder".to_string(), style, border), practice_main_layout_answer);
+    frame.render_widget(get_status_box(app.practice_get_round_status_string(), style, border), practice_main_layout_status);
+
+}
+
+fn get_question_box<'a>(question: String, style: Style, border: BorderType) -> Paragraph<'a> {
+    Paragraph::new(question)
         .style(style)
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))
                 .border_type(border)
-        );
-    frame.render_widget(placeholder, draw_area);
+        )
+}
 
+fn get_answer_box<'a>(question: String, style: Style, border: BorderType) -> Paragraph<'a> {
+    Paragraph::new(question)
+        .style(style)
+        .block(
+            Block::bordered()
+                .padding(Padding::horizontal(1))
+                .border_type(border)
+        )
+}
+
+fn get_status_box<'a>(question: String, style: Style, border: BorderType) -> Paragraph<'a> {
+    Paragraph::new(question)
+        .style(style)
+        .block(
+            Block::bordered()
+                .padding(Padding::horizontal(1))
+                .border_type(border)
+        )
 }

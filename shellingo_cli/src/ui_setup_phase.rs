@@ -1,7 +1,6 @@
-use ratatui::crossterm::style::Stylize;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Margin, Rect};
-use ratatui::prelude::{Color, Style};
+use ratatui::prelude::{Color};
 use ratatui_widgets::block::{Block, Padding};
 use ratatui_widgets::list::{List, ListItem};
 use ratatui_widgets::paragraph::Paragraph;

@@ -193,7 +193,7 @@ impl AppState {
     pub fn setup_navigate_to_practice(&mut self) -> Result<(), Box<dyn Error>> {
         self.active_questions = self.practice_get_all_active_questions();
         self.round_questions = self.active_questions.clone();
-        self.round_questions.shuffle(&mut rand::rng());
+        self.practice_shuffle_questions();
         self.set_active_component(UiComponent::PracticeControls);
         Ok(())
     }
@@ -232,13 +232,13 @@ impl AppState {
 
     fn practice_filter_data_to_hardest_in_round(&mut self, limit: usize) -> Result<(), Box<dyn Error>> {
         self.round_questions = practice::get_hardest_questions_in_round(&self.round_questions, limit);
-        self.round_questions.shuffle(&mut rand::rng());
+        self.practice_shuffle_questions();
         Ok(())
     }
 
     fn practice_reset_round_question_filters(&mut self) -> Result<(), Box<dyn Error>> {
         self.round_questions = self.active_questions.clone();
-        self.round_questions.shuffle(&mut rand::rng());
+        self.practice_shuffle_questions();
         Ok(())
     }
 
@@ -259,6 +259,27 @@ impl AppState {
             PracticeControlOptions::TryHardest10 => self.practice_filter_data_to_hardest_in_round(10),
             PracticeControlOptions::TryAll => self.practice_reset_round_question_filters(),
         }
+    }
+
+    pub fn practice_set_next_question_in_round(&mut self) -> Result<(), Box<dyn Error>>  {
+        self.current_question_index += 1;
+        if self.current_question_index.ge(&self.round_questions.len()) {
+            self.practice_shuffle_questions();
+        }
+        Ok(())
+    }
+
+    fn practice_shuffle_questions(&mut self) {
+        self.current_question_index = 0;
+        self.round_questions.shuffle(&mut rand::rng());
+    }
+
+    pub fn practice_get_current_question_in_round(&mut self) -> Rc<RefCell<Question>> {
+        self.round_questions.get(self.current_question_index).unwrap().clone()
+    }
+
+    pub fn practice_get_round_status_string(&mut self) -> String {
+        format!("{}/{}", self.current_question_index + 1, self.round_questions.len())
     }
 
     pub fn open_exit_popup(&mut self) -> Result<(), Box<dyn Error>> {

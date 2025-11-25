@@ -52,15 +52,9 @@ fn get_practice_control_list<'a>(app: &mut AppState) -> List<'a>{
 }
 
 pub(crate) fn render_practice_main(app: &mut AppState, frame: &mut Frame, draw_area: Rect) {
-    // TODO:
-    //  - New object to track RoundState
-    //          - round_questions: Vec<Rc<RefCell<Question>>> --> init from app.active_questions + randomized
-    //          - current_question: u16 = 0 (index of round_question)
-    //          - fn restart_round() --> randomize + reset current_question to 0
-    //          - fn filters.. ---> filter and override round_questions
     let (border, style) = ui_shared::get_style_for_component(UiComponent::PracticeMain, app);
     let placeholder = Paragraph::new(
-        app.active_questions.iter().cloned().map(|q| Line::from(q.borrow().question.clone())).collect::<Vec<Line>>()
+        app.round_questions.iter().cloned().map(|q| Line::from(q.borrow().question.clone())).collect::<Vec<Line>>()
     )
         .style(style)
         .block(

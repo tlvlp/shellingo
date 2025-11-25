@@ -4,6 +4,7 @@ use ratatui_widgets::list::ListState;
 use std::error::Error;
 use std::ops::Not;
 use std::rc::Rc;
+use rand::seq::SliceRandom;
 use ratatui_widgets::scrollbar::ScrollbarState;
 use ratatui_widgets::table::TableState;
 use strum::{EnumIter, EnumMessage, VariantArray};
@@ -189,8 +190,10 @@ impl AppState {
         Ok(())
     }
 
-    pub fn navigate_to_practice_main(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn setup_navigate_to_practice(&mut self) -> Result<(), Box<dyn Error>> {
         self.active_questions = self.practice_get_all_active_questions();
+        self.round_questions = self.active_questions.clone();
+        self.round_questions.shuffle(&mut rand::rng());
         self.set_active_component(UiComponent::PracticeControls);
         Ok(())
     }
@@ -229,11 +232,13 @@ impl AppState {
 
     fn practice_filter_data_to_hardest_in_round(&mut self, limit: usize) -> Result<(), Box<dyn Error>> {
         self.round_questions = practice::get_hardest_questions_in_round(&self.round_questions, limit);
+        self.round_questions.shuffle(&mut rand::rng());
         Ok(())
     }
 
     fn practice_reset_round_question_filters(&mut self) -> Result<(), Box<dyn Error>> {
-        self.round_questions = self.practice_get_all_active_questions();
+        self.round_questions = self.active_questions.clone();
+        self.round_questions.shuffle(&mut rand::rng());
         Ok(())
     }
 

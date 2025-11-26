@@ -8,6 +8,7 @@ use rand::seq::SliceRandom;
 use ratatui_widgets::scrollbar::ScrollbarState;
 use ratatui_widgets::table::TableState;
 use strum::{EnumIter, EnumMessage, VariantArray};
+use tui_input::Input;
 use shellingo_core::practice;
 use shellingo_core::question::Question;
 use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_all_paths, QuestionGroup};
@@ -59,6 +60,7 @@ pub struct AppState {
     pub active_questions: Vec<Rc<RefCell<Question>>>,
     pub round_questions: Vec<Rc<RefCell<Question>>>,
     pub current_question_index: usize,
+    pub answer_input: Input,
 }
 
 impl AppState {
@@ -88,6 +90,7 @@ impl AppState {
             active_questions: vec![],
             round_questions: vec![],
             current_question_index: 0,
+            answer_input: Input::default(),
         };
 
         app.question_group_list_state.select_first();

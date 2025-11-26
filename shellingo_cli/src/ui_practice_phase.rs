@@ -71,42 +71,36 @@ pub(crate) fn render_practice_main(app: &mut AppState, frame: &mut Frame, draw_a
         .clone();
     let question_text = question.question;
 
-    frame.render_widget(get_question_box(question_text, style, border), practice_main_layout_question);
-    frame.render_widget(get_answer_box("Answer placeholder".to_string(), style, border), practice_main_layout_answer);
-    frame.render_widget(get_status_box(app.practice_get_round_status_string(), style, border), practice_main_layout_status);
+    frame.render_widget(get_generic_block(" Question: ", question_text, style, border), main_question_area);
+    render_input(app, frame, style, border, main_answer_area);
+    frame.render_widget(get_generic_block(" Practice status: ", app.practice_get_round_status_string(), style, border), main_status_area);
 
 }
 
-fn get_question_box<'a>(question: String, style: Style, border: BorderType) -> Paragraph<'a> {
-    Paragraph::new(question)
-        .style(style)
-        .block(
-            Block::bordered()
-                .title(" Question: ")
-                .padding(Padding::horizontal(1))
-                .border_type(border)
-                .border_style(Style::new().dim())
-        )
+fn render_input(app: &mut AppState, frame: &mut Frame, style: Style, border: BorderType, area: Rect) {
+    let width = area.width.max(3) - 3;
+    let scroll = app.answer_input.visual_scroll(width as usize);
+    let input = Paragraph::new(app.answer_input.value())
+        .style(style.fg(Color::Green))
+        .scroll((0, scroll as u16))
+        .block(Block::bordered()
+            .title(" Answer: ")
+            .border_type(border)
+            .border_style(Style::new().dim())
+        );
+
+    let cursor = app.answer_input.visual_cursor().max(scroll) - scroll + 1;
+
+    frame.set_cursor_position((area.x + cursor as u16, area.y + 1));
+    frame.render_widget(input, area);
 }
 
-fn get_answer_box<'a>(question: String, style: Style, border: BorderType) -> Paragraph<'a> {
-    Paragraph::new(question)
+fn get_generic_block(title: &'_ str, contents: String, style: Style, border: BorderType) -> Paragraph<'_> {
+    Paragraph::new(contents)
         .style(style)
         .block(
             Block::bordered()
-                .title(" Answer: ")
-                .padding(Padding::horizontal(1))
-                .border_type(border)
-                .border_style(Style::new().dim())
-        )
-}
-
-fn get_status_box<'a>(question: String, style: Style, border: BorderType) -> Paragraph<'a> {
-    Paragraph::new(question)
-        .style(style)
-        .block(
-            Block::bordered()
-                .title(" Practice status: ")
+                .title(title)
                 .padding(Padding::horizontal(1))
                 .border_type(border)
                 .border_style(Style::new().dim())

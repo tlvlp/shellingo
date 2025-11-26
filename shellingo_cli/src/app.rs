@@ -231,7 +231,7 @@ impl AppState {
     }
 
     fn practice_filter_data_to_hardest_in_round(&mut self, limit: usize) -> Result<(), Box<dyn Error>> {
-        self.round_questions = practice::get_hardest_questions_in_round(&self.round_questions, limit);
+        self.round_questions = practice::get_hardest_questions_in_round(&self.active_questions, limit);
         self.practice_shuffle_questions();
         Ok(())
     }

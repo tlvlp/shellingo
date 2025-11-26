@@ -16,7 +16,7 @@ pub(crate) fn get_body_constraints() -> [Constraint; 2] {
 pub(crate) fn render_title_with_tooltips(frame: &mut Frame, title_block: Block,  draw_area: Rect) {
     frame.render_widget(
         Paragraph::new(
-            "[Tab] switch panes, [↑↓] navigate, [Enter] check answer"
+            "[Tab] switch panes, [↑↓←→] navigate, [Enter] check answer"
         ).block(title_block),
 
         draw_area
@@ -44,7 +44,8 @@ fn get_practice_control_list<'a>(app: &mut AppState) -> List<'a>{
     .block(
         Block::bordered()
             .padding(Padding::horizontal(1))
-            .border_type(border),
+            .border_type(border)
+            .border_style(Style::new().dim())
     )
         .highlight_symbol("> ")
         .highlight_style(style.fg(Color::Black).bg(Color::White))
@@ -81,9 +82,10 @@ fn get_question_box<'a>(question: String, style: Style, border: BorderType) -> P
         .style(style)
         .block(
             Block::bordered()
-                .title(" Question ")
+                .title(" Question: ")
                 .padding(Padding::horizontal(1))
                 .border_type(border)
+                .border_style(Style::new().dim())
         )
 }
 
@@ -92,9 +94,10 @@ fn get_answer_box<'a>(question: String, style: Style, border: BorderType) -> Par
         .style(style)
         .block(
             Block::bordered()
-                .title(" Answer ")
+                .title(" Answer: ")
                 .padding(Padding::horizontal(1))
                 .border_type(border)
+                .border_style(Style::new().dim())
         )
 }
 
@@ -103,8 +106,9 @@ fn get_status_box<'a>(question: String, style: Style, border: BorderType) -> Par
         .style(style)
         .block(
             Block::bordered()
-                .title(" Practice status ")
+                .title(" Practice status: ")
                 .padding(Padding::horizontal(1))
                 .border_type(border)
+                .border_style(Style::new().dim())
         )
 }

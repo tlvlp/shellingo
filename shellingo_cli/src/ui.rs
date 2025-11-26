@@ -14,7 +14,7 @@ use ratatui_widgets::paragraph::Paragraph;
 
 pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
     let app_phase = app.get_app_phase_for_active_component();
-    
+
     // Split the main layout
     let main_layout = Layout::default()
         .direction(Direction::Vertical)
@@ -27,6 +27,7 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
     let title_block = Block::bordered()
         .title("[ Shellingo ]")
         .border_type(BorderType::Plain)
+        .border_style(Style::new().dim())
         .padding(Padding::horizontal(1));
 
     // Body layout
@@ -77,8 +78,6 @@ fn get_exit_popup<'a>() -> Paragraph<'a> {
             .style(Style::default().fg(Color::Red))
         ).alignment(Alignment::Center)
 }
-
-
 
 fn popup_area(area: Rect, x_len: u16, y_len: u16) -> Rect {
     let vertical = Layout::vertical([Constraint::Length(y_len)]).flex(Flex::Center);

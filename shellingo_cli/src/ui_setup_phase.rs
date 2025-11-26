@@ -1,6 +1,7 @@
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Margin, Rect};
 use ratatui::prelude::{Color};
+use ratatui::style::Style;
 use ratatui_widgets::block::{Block, Padding};
 use ratatui_widgets::list::{List, ListItem};
 use ratatui_widgets::paragraph::Paragraph;
@@ -54,7 +55,8 @@ fn get_question_group_list<'a>(app: &mut AppState) -> (List<'a>, usize) {
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))
-                .border_type(border),
+                .border_type(border)
+                .border_style(Style::new().dim())
         )
         .highlight_symbol("> ")
         .highlight_style(style.fg(Color::Black).bg(Color::White))
@@ -97,6 +99,7 @@ fn get_question_table<'a>(app: &mut AppState) -> (Table<'a>, usize) {
             Block::bordered()
                 .padding(Padding::horizontal(1))
                 .border_type(border)
+                .border_style(Style::new().dim())
         )
         .row_highlight_style(style.fg(Color::Black).bg(Color::White)).style(style);
 

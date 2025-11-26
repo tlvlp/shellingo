@@ -3,7 +3,7 @@ use crate::{ ui_setup_phase, ui_practice_phase};
 use ratatui::prelude::Color;
 use ratatui::style::Style;
 use ratatui::{
-    layout::{Constraint, Direction, Layout},
+    layout::{Constraint, Layout},
     widgets::{Block, Padding},
     Frame,
 };
@@ -16,14 +16,11 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
     let app_phase = app.get_app_phase_for_active_component();
 
     // Split the main layout
-    let main_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Length(3), Constraint::Min(0)])
-        .split(frame.area());
-    let main_layout_title = main_layout[0];
-    let main_layout_body = main_layout[1];
+    let [help_area, body_area] =
+        Layout::vertical([Constraint::Length(3), Constraint::Min(0)])
+            .areas(frame.area());
 
-    // Title layout
+    // Title
     let title_block = Block::bordered()
         .title("[ Shellingo ]")
         .border_type(BorderType::Plain)
@@ -31,29 +28,24 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
         .padding(Padding::horizontal(1));
 
     // Body layout
-    let body_layout = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(
-            match app_phase {
-                AppPhase::Setup => ui_setup_phase::get_body_constraints(),
-                AppPhase::Practice => ui_practice_phase::get_body_constraints(),
-            }
-        )
-        .split(main_layout_body);
-    let body_layout_left = body_layout[0];
-    let body_layout_right = body_layout[1];
+    let [body_left_area, body_right_area]  = Layout::horizontal(
+        match app_phase {
+            AppPhase::Setup => ui_setup_phase::get_body_constraints(),
+            AppPhase::Practice => ui_practice_phase::get_body_constraints(),
+        }
+    ).areas(body_area);
 
     // Render contents
     match app_phase {
         AppPhase::Setup => {
-            ui_setup_phase::render_title_with_tooltips(frame, title_block, main_layout_title);
-            ui_setup_phase::render_group_list_with_scrollbar(app, frame, body_layout_left);
-            ui_setup_phase::render_question_table_with_scrollbar(app, frame, body_layout_right);
+            ui_setup_phase::render_title_with_help_text(frame, title_block, help_area);
+            ui_setup_phase::render_group_list_with_scrollbar(app, frame, body_left_area);
+            ui_setup_phase::render_question_table_with_scrollbar(app, frame, body_right_area);
         },
         AppPhase::Practice => {
-            ui_practice_phase::render_title_with_tooltips(frame, title_block, main_layout_title);
-            ui_practice_phase::render_practice_controls(app, frame, body_layout_left);
-            ui_practice_phase::render_practice_main(app, frame, body_layout_right);
+            ui_practice_phase::render_title_with_help_text(frame, title_block, help_area);
+            ui_practice_phase::render_practice_controls(app, frame, body_left_area);
+            ui_practice_phase::render_practice_main(app, frame, body_right_area);
         }
     };
 

@@ -13,11 +13,11 @@ pub(crate) fn get_body_constraints() -> [Constraint; 2] {
     [Constraint::Percentage(20), Constraint::Percentage(80)]
 }
 
-pub(crate) fn render_title_with_tooltips(frame: &mut Frame, title_block: Block,  draw_area: Rect) {
+pub(crate) fn render_title_with_help_text(frame: &mut Frame, title_block: Block, draw_area: Rect) {
     frame.render_widget(
         Paragraph::new(
             "[Tab] switch panes, [↑↓←→] navigate, [Enter/Space] select items, [P] start practice"
-        ).block(title_block),
+        ).block(title_block).style(Style::new().dim()),
 
         draw_area
     );
@@ -93,8 +93,8 @@ fn get_question_table<'a>(app: &mut AppState) -> (Table<'a>, usize) {
             }
         ]));
     let question_count = rows.len();
-    let widths = [Constraint::Fill(1), Constraint::Fill(1)];
-    let table = Table::new(rows, widths)
+    let column_widths = [Constraint::Fill(1), Constraint::Fill(1)];
+    let table = Table::new(rows, column_widths)
         .block(
             Block::bordered()
                 .padding(Padding::horizontal(1))

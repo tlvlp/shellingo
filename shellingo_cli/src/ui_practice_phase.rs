@@ -13,11 +13,11 @@ pub(crate) fn get_body_constraints() -> [Constraint; 2] {
     [Constraint::Length(22), Constraint::Fill(1)]
 }
 
-pub(crate) fn render_title_with_tooltips(frame: &mut Frame, title_block: Block,  draw_area: Rect) {
+pub(crate) fn render_title_with_help_text(frame: &mut Frame, title_block: Block, draw_area: Rect) {
     frame.render_widget(
         Paragraph::new(
             "[Tab] switch panes, [↑↓←→] navigate, [Enter] check answer"
-        ).block(title_block),
+        ).block(title_block).style(Style::new().dim()),
 
         draw_area
     );
@@ -54,17 +54,17 @@ fn get_practice_control_list<'a>(app: &mut AppState) -> List<'a>{
 
 pub(crate) fn render_practice_main(app: &mut AppState, frame: &mut Frame, draw_area: Rect) {
     let (border, style) = ui_shared::get_style_for_component(UiComponent::PracticeMain, app);
-    let practice_main_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(3),
-            Constraint::Length(3),
-            Constraint::Length(3)
-        ])
-        .split(draw_area);
-    let practice_main_layout_question = practice_main_layout[0];
-    let practice_main_layout_answer = practice_main_layout[1];
-    let practice_main_layout_status = practice_main_layout[2];
+    let [
+        main_question_area,
+        main_answer_area,
+        main_status_area
+    ] = Layout::vertical([
+        Constraint::Length(3),
+        Constraint::Length(3),
+        Constraint::Length(3)
+    ])
+        .areas(draw_area);
+
 
     let question = app.practice_get_current_question_in_round()
         .borrow_mut()

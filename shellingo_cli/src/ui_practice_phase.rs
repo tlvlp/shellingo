@@ -40,6 +40,7 @@ fn get_practice_control_list<'a>(app: &mut AppState) -> List<'a>{
         })
         .collect::<Vec<ListItem>>();
     List::new(controls)
+        .style(style)
     .block(
         Block::bordered()
             .padding(Padding::horizontal(1))
@@ -54,7 +55,11 @@ pub(crate) fn render_practice_main(app: &mut AppState, frame: &mut Frame, draw_a
     let (border, style) = ui_shared::get_style_for_component(UiComponent::PracticeMain, app);
     let practice_main_layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(20), Constraint::Percentage(60), Constraint::Percentage(200)] )
+        .constraints([
+            Constraint::Length(3),
+            Constraint::Length(3),
+            Constraint::Length(3)
+        ])
         .split(draw_area);
     let practice_main_layout_question = practice_main_layout[0];
     let practice_main_layout_answer = practice_main_layout[1];
@@ -76,6 +81,7 @@ fn get_question_box<'a>(question: String, style: Style, border: BorderType) -> P
         .style(style)
         .block(
             Block::bordered()
+                .title(" Question ")
                 .padding(Padding::horizontal(1))
                 .border_type(border)
         )
@@ -86,6 +92,7 @@ fn get_answer_box<'a>(question: String, style: Style, border: BorderType) -> Par
         .style(style)
         .block(
             Block::bordered()
+                .title(" Answer ")
                 .padding(Padding::horizontal(1))
                 .border_type(border)
         )
@@ -96,6 +103,7 @@ fn get_status_box<'a>(question: String, style: Style, border: BorderType) -> Par
         .style(style)
         .block(
             Block::bordered()
+                .title(" Practice status ")
                 .padding(Padding::horizontal(1))
                 .border_type(border)
         )

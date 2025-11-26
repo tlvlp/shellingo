@@ -5,7 +5,7 @@ use crate::app::{AppState, UiComponent};
 
 pub(crate) fn get_style_for_component(component: UiComponent, app: &mut AppState) -> (BorderType, Style) {
     if app.get_active_component() == component {
-        (BorderType::Thick, Style::default())
+        (BorderType::Plain, Style::default())
     } else {
         (BorderType::Plain, Style::default().dim())
     }

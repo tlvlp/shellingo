@@ -8,8 +8,8 @@ shellingo_core = { path = "../shellingo_core" }
 walkdir = "2.5.0"
 regex = "1.10.6"
 strum = { version = "0.27", features = ["derive"] }
+rand = "0.10.0-rc.5"
 # TUI
 ratatui = { version = "0.30.0-beta.0", features = ["crossterm"] }
 ratatui-widgets = { version = "0.3.0-beta.0" }
-rand = "0.10.0-rc.5"
-tui-input = "0.14.0"
+tui-input = {version = "0.14.0", features = ["crossterm"], default-features = false}

@@ -1,5 +1,5 @@
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::prelude::{Color, Style};
 use ratatui_widgets::block::{Block, Padding};
 use ratatui_widgets::borders::BorderType;
@@ -16,7 +16,7 @@ pub(crate) fn get_body_constraints() -> [Constraint; 2] {
 pub(crate) fn render_title_with_help_text(frame: &mut Frame, title_block: Block, draw_area: Rect) {
     frame.render_widget(
         Paragraph::new(
-            "[Tab] switch panes, [↑↓←→] navigate, [Enter] check answer"
+            "[Tab] switch panes, [↑↓] navigate menu, [Enter] check answer, [Esc] "
         ).block(title_block).style(Style::new().dim()),
 
         draw_area

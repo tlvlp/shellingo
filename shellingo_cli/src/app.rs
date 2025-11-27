@@ -197,12 +197,13 @@ impl AppState {
         self.active_questions = self.practice_get_all_active_questions();
         self.round_questions = self.active_questions.clone();
         self.practice_shuffle_questions();
-        self.set_active_component(UiComponent::PracticeControls);
+        self.set_active_component(UiComponent::PracticeMain);
         Ok(())
     }
 
     pub fn practice_navigate_to_setup(&mut self) -> Result<(), Box<dyn Error>> {
         self.set_active_component(UiComponent::GroupSelector);
+        self.answer_input.reset();
         Ok(())
     }
 

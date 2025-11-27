@@ -3,12 +3,14 @@ use ratatui::crossterm::event;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::crossterm::event::{Event};
 use std::error::Error;
+use ratatui::crossterm;
+use tui_input::backend::crossterm::EventHandler;
 
 pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
     if event::poll(std::time::Duration::from_millis(100))? {
-        match event::read()? {
-            Event::Key(key_event) => {
-                let key = key_event.code;
+        let input_event = crossterm::event::read()?;
+        match input_event {
+            Event::Key(KeyEvent { code: key, .. }) => {
                 match app.get_active_component() {
                     // Setup phase
                     UiComponent::GroupSelector => handle_group_selector_input(app, key),
@@ -16,7 +18,7 @@ pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
 
                     // Practice phase
                     UiComponent::PracticeControls => handle_practice_controls_input(app, key),
-                    UiComponent::PracticeMain => handle_practice_main_input(app, key_event),
+                    UiComponent::PracticeMain => handle_practice_main_input(app, input_event),
 
                     // Exit
                     UiComponent::ExitPopup => handle_exit_popup_input(app, key),
@@ -70,14 +72,17 @@ fn handle_practice_controls_input(app: &mut AppState, key: KeyCode) -> Result<()
     }
 }
 
-fn handle_practice_main_input(app: &mut AppState, event: KeyEvent) -> Result<(), Box<dyn Error>> {
-    match event.code {
-        KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.practice_toggle_panes(),
-        KeyCode::Enter => app.practice_set_next_question_in_round(),
-        KeyCode::Esc => app.open_exit_popup(),
-        _ => Ok(
-            // app.answer_input.handle_event(event)
-            ()),
+fn handle_practice_main_input(app: &mut AppState, event: Event) -> Result<(), Box<dyn Error>> {
+    match event.as_key_event()
+        .expect("Event expected to be a key event at this point")
+        .code {
+            KeyCode::Tab => app.practice_toggle_panes(),
+            KeyCode::Enter => app.practice_set_next_question_in_round(),
+            KeyCode::Esc => app.open_exit_popup(),
+            _ => {
+                app.answer_input.handle_event(&event);
+                Ok(())
+            }
     }
 }
 

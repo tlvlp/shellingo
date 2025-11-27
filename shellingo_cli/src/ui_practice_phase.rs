@@ -81,7 +81,7 @@ fn render_input(app: &mut AppState, frame: &mut Frame, style: Style, border: Bor
     let width = area.width.max(3) - 3;
     let scroll = app.answer_input.visual_scroll(width as usize);
     let input = Paragraph::new(app.answer_input.value())
-        .style(style.fg(Color::Green))
+        .style(style)
         .scroll((0, scroll as u16))
         .block(Block::bordered()
             .title(" Answer: ")

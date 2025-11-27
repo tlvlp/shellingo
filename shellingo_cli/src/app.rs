@@ -61,6 +61,7 @@ pub struct AppState {
     pub round_questions: Vec<Rc<RefCell<Question>>>,
     pub current_question_index: usize,
     pub answer_input: Input,
+    pub is_previous_answer_successful: Option<bool>,
 }
 
 impl AppState {
@@ -91,6 +92,7 @@ impl AppState {
             round_questions: vec![],
             current_question_index: 0,
             answer_input: Input::default(),
+            is_previous_answer_successful: None,
         };
 
         app.question_group_list_state.select_first();
@@ -198,19 +200,18 @@ impl AppState {
         self.round_questions = self.active_questions.clone();
         self.practice_shuffle_questions();
         self.set_active_component(UiComponent::PracticeMain);
-        Ok(())
+        self.practice_reset_answer()
     }
 
     pub fn practice_navigate_to_setup(&mut self) -> Result<(), Box<dyn Error>> {
         self.set_active_component(UiComponent::GroupSelector);
         self.answer_input.reset();
-        Ok(())
+        self.practice_reset_answer()
     }
 
     pub fn practice_toggle_panes(&mut self) -> Result<(), Box<dyn Error>> {
         if self.active_component == UiComponent::PracticeControls {
             self.set_active_component(UiComponent::PracticeMain);
-            //TODO select input component
         } else {
             self.set_active_component(UiComponent::PracticeControls);
         }
@@ -237,13 +238,13 @@ impl AppState {
     fn practice_filter_data_to_hardest_in_round(&mut self, limit: usize) -> Result<(), Box<dyn Error>> {
         self.round_questions = practice::get_hardest_questions_in_round(&self.active_questions, limit);
         self.practice_shuffle_questions();
-        Ok(())
+        self.practice_reset_answer()
     }
 
     fn practice_reset_round_question_filters(&mut self) -> Result<(), Box<dyn Error>> {
         self.round_questions = self.active_questions.clone();
         self.practice_shuffle_questions();
-        Ok(())
+        self.practice_reset_answer()
     }
 
     fn practice_get_all_active_questions(&mut self) -> Vec<Rc<RefCell<Question>>> {
@@ -265,6 +266,26 @@ impl AppState {
         }
     }
 
+    pub fn practice_validate_attempt(&mut self) -> Result<(), Box<dyn Error>> {
+        let question = self.practice_get_current_question_in_round().clone();
+        if practice::is_attempt_successful(self.answer_input.value(), question.clone()) {
+            question.borrow_mut().increment_correct_count(1);
+            self.is_previous_answer_successful = Some(true);
+            self.answer_input.reset();
+            self.practice_set_next_question_in_round()?;
+        } else {
+            question.borrow_mut().increment_error_count(1);
+            self.is_previous_answer_successful = Some(false);
+        }
+        Ok(())
+    }
+
+    fn practice_reset_answer(&mut self) -> Result<(), Box<dyn Error>> {
+        self.answer_input.reset();
+        self.is_previous_answer_successful = None;
+        Ok(())
+    }
+
     pub fn practice_set_next_question_in_round(&mut self) -> Result<(), Box<dyn Error>>  {
         self.current_question_index += 1;
         if self.current_question_index.ge(&self.round_questions.len()) {
@@ -283,7 +304,12 @@ impl AppState {
     }
 
     pub fn practice_get_round_status_string(&mut self) -> String {
-        format!("{}/{}", self.current_question_index + 1, self.round_questions.len())
+        let feedback_message = match self.is_previous_answer_successful {
+            None => ":) Good luck!",
+            Some(true) =>  r" \o/ Yay, correct!",
+            Some(false) => r" _o_ Try again! (or request a clue form the menu)"
+        };
+        format!("{}/{} - {}", self.current_question_index + 1, self.round_questions.len(), feedback_message)
     }
 
     pub fn open_exit_popup(&mut self) -> Result<(), Box<dyn Error>> {

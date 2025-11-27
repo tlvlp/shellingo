@@ -77,7 +77,7 @@ fn handle_practice_main_input(app: &mut AppState, event: Event) -> Result<(), Bo
         .expect("Event expected to be a key event at this point")
         .code {
             KeyCode::Tab => app.practice_toggle_panes(),
-            KeyCode::Enter => app.practice_set_next_question_in_round(),
+            KeyCode::Enter => app.practice_validate_attempt(),
             KeyCode::Esc => app.open_exit_popup(),
             _ => {
                 app.answer_input.handle_event(&event);

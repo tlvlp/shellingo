@@ -43,21 +43,15 @@ pub fn get_hardest_questions_in_round(questions: &Vec<Rc<RefCell<Question>>>, li
         .collect()
 }
 
-pub fn validate_attempt(attempt: &String, question: &mut Question) -> bool {
+pub fn is_attempt_successful(attempt: &str, question: Rc<RefCell<Question>>) -> bool {
     let cleaned_attempt = clean_string(attempt);
-    let is_success = question.answers.iter()
+    question.borrow_mut().answers.iter()
         .map(|answer| clean_string(answer) == cleaned_attempt)
         .reduce(|a, b| a || b)
-        .unwrap_or(false);
-    if is_success {
-        question.increment_correct_count(1)
-    } else {
-        question.increment_error_count(1)
-    }
-    is_success
+        .unwrap_or(false)
 }
 
-fn clean_string(response: &String) -> String {
+fn clean_string(response: &str) -> String {
     let trimmed_lowercase = response
         .trim()
         .to_lowercase();
@@ -145,40 +139,39 @@ mod tests {
 
     }
 
-    // FIXME: Rc borrow something something.. mumble mumble
-    // #[test]
-    // fn test_get_hardest_questions_in_round() {
-    //     // Given
-    //     let q1 = Rc::new(RefCell::new(Question::new(String::new(), String::from("q1"), String::new())));
-    //     let mut q2 = Rc::new(RefCell::new(Question::new(String::new(), String::from("q2"), String::new())));
-    //     let mut q3 = Rc::new(RefCell::new(Question::new(String::new(), String::from("q3"), String::new())));
-    //     let mut q4 = Rc::new(RefCell::new(Question::new(String::new(), String::from("q3"), String::new())));
-    //     // Expected order: q4, q2, q3
-    //     q2.get_mut().increment_error_count(5);
-    //     q3.get_mut().increment_error_count(1);
-    //     q4.get_mut().increment_error_count(10);
-    //
-    //     let limit = 3;
-    //
-    //     let questions = vec![q1.clone(), q2.clone(), q3.clone(), q4.clone()];
-    //     let expected = vec![questions[3].clone(), questions[1].clone(), questions[2].clone()]; // Will drop q1, due to the limit.
-    //
-    //     // When
-    //     let actual = get_hardest_questions_in_round(&questions, limit);
-    //
-    //     // Then
-    //     assert_eq!(actual, expected);
-    // }
+    #[test]
+    fn test_get_hardest_questions_in_round() {
+        // Given
+        let q1 = Rc::new(RefCell::new(Question::new(String::new(), String::from("q1"), String::new())));
+        let q2 = Rc::new(RefCell::new(Question::new(String::new(), String::from("q2"), String::new())));
+        let q3 = Rc::new(RefCell::new(Question::new(String::new(), String::from("q3"), String::new())));
+        let q4 = Rc::new(RefCell::new(Question::new(String::new(), String::from("q3"), String::new())));
+        // Expected order: q4, q2, q3
+        q2.borrow_mut().increment_error_count(5);
+        q3.borrow_mut().increment_error_count(1);
+        q4.borrow_mut().increment_error_count(10);
+
+        let limit = 3;
+
+        let questions = vec![q1.clone(), q2.clone(), q3.clone(), q4.clone()];
+        let expected = vec![questions[3].clone(), questions[1].clone(), questions[2].clone()]; // Will drop q1, due to the limit.
+
+        // When
+        let actual = get_hardest_questions_in_round(&questions, limit);
+
+        // Then
+        assert_eq!(actual, expected);
+    }
 
     #[test]
     fn is_attempt_successful_matches_answer() {
         // Given
-        let mut question = Question::new(String::new(), String::from("q1"), String::new());
-        question.answers = HashSet::from(["answer one".to_string(), "answer two".to_string()]);
-        let attempt = "answer one".to_string();
+        let question = Rc::new(RefCell::new(Question::new(String::new(), String::from("q1"), String::new())));
+        question.borrow_mut().answers = HashSet::from(["answer one".to_string(), "answer two".to_string()]);
+        let attempt = "answer one";
 
         // When
-        let actual = validate_attempt(&attempt, &mut question);
+        let actual = is_attempt_successful(attempt, question);
 
         //Then
         assert_eq!(actual, true);
@@ -188,12 +181,12 @@ mod tests {
     #[test]
     fn is_attempt_successful_no_answer_to_match() {
         // Given
-        let mut question = Question::new(String::new(), String::from("q1"), String::new());
-        question.answers = HashSet::from(["answer one".to_string(), "answer two".to_string()]);
-        let attempt = "something else".to_string();
+        let question = Rc::new(RefCell::new(Question::new(String::new(), String::from("q1"), String::new())));
+        question.borrow_mut().answers = HashSet::from(["answer one".to_string(), "answer two".to_string()]);
+        let attempt = "something else";
 
         // When
-        let actual = validate_attempt(&attempt, &mut question);
+        let actual = is_attempt_successful(attempt, question);
 
         //Then
         assert_eq!(actual, false);

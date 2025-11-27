@@ -86,12 +86,13 @@ fn render_input(app: &mut AppState, frame: &mut Frame, style: Style, border: Bor
         .block(Block::bordered()
             .title(" Answer: ")
             .border_type(border)
+            .padding(Padding::horizontal(1))
             .border_style(Style::new().dim())
         );
 
     let cursor = app.answer_input.visual_cursor().max(scroll) - scroll + 1;
 
-    frame.set_cursor_position((area.x + cursor as u16, area.y + 1));
+    frame.set_cursor_position((area.x + 1 + cursor as u16, area.y + 1));
     frame.render_widget(input, area);
 }
 

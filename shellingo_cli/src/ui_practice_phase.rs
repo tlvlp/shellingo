@@ -73,7 +73,7 @@ pub(crate) fn render_practice_main(app: &mut AppState, frame: &mut Frame, draw_a
 
     frame.render_widget(get_generic_block(" Question: ", question_text, style, border), main_question_area);
     render_input(app, frame, style, border, main_answer_area);
-    frame.render_widget(get_generic_block(" Practice status: ", app.practice_get_round_status_string(), style, border), main_status_area);
+    frame.render_widget(get_generic_block(" Round status: ", app.practice_get_round_status_string(), style, border), main_status_area);
 
 }
 

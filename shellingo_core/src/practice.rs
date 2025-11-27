@@ -9,26 +9,23 @@ pub const ANSWER_REVEAL_PENALTY: u16 = 10;
 static REGEX_MULTIPLE_SPACES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
 static REGEX_SYMBOLS_TO_REMOVE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[?,!.:;]+").unwrap());
 
-pub fn reveal_clue_for_penalty(question: &mut Question) -> String {
-    question.increment_error_count(CLUE_REVEAL_PENALTY);
-    question.answers.iter()
+pub fn reveal_clue(question: Rc<RefCell<Question>>) -> String {
+    question.borrow().answers.iter()
+        .next()
         .map(|answer|
             answer.chars()
                 .enumerate()
                 // Mask every second character
-                .map(|(index, character)| if index % 2 == 0 { character } else { '■' })
+                .map(|(index, c)|  if c == ' ' || index % 2 == 0 { c } else { '■' })
                 .collect::<String>()
         )
-        .reduce(|a, b| format!("{a} or {b}"))
-        .unwrap_or(format!("Cannot generate clue for the answer(s): '{:?}'", question.answers))
+        .unwrap_or(format!("Cannot generate clue for the answer(s): '{:?}'", question))
 }
 
-pub fn reveal_answer_for_penalty(question: &mut Question) -> String {
-    question.increment_error_count(ANSWER_REVEAL_PENALTY);
-    question.answers.iter()
-        .cloned()
-        .reduce(|a, b| format!("{a} or {b}"))
-        .unwrap_or(format!("Cannot generate clue for the answer(s): '{:?}'", question.answers))
+pub fn reveal_answer(question: Rc<RefCell<Question>>) -> String {
+    question.borrow_mut().answers.iter()
+        .next()
+        .expect(format!("Cannot reveal answer(s): '{:?}'", question).as_str()).clone()
 }
 
 pub fn get_hardest_questions_in_round(questions: &Vec<Rc<RefCell<Question>>>, limit: usize) -> Vec<Rc<RefCell<Question>>> {
@@ -67,36 +64,29 @@ mod tests {
     use super::*;
 
     #[test]
-    fn reveal_clue_for_penalty_for_single_answer() {
+    fn reveal_clue_for_for_single_answer() {
         // Given
-        let mut question = Question::new("location_1".to_string(), "question_1".to_string(), "answer_1".to_string());
+        let question = Rc::new(RefCell::new(Question::new("location_1".to_string(), "question_1".to_string(), "answer_1".to_string())));
         let expected = "a■s■e■_■".to_string();
 
         // When
-        let actual = reveal_clue_for_penalty(&mut question);
+        let actual = reveal_clue(question.clone());
 
         // Then
         assert_eq!(expected, actual);
-        assert!(question.answers.contains("answer_1"), "The original answer remains unchanged");
-        assert!(
-            question.get_error_count_for_round() == CLUE_REVEAL_PENALTY
-                && question.get_error_count_sum() == CLUE_REVEAL_PENALTY
-                && question.get_correct_count_for_round() == 0
-                && question.get_correct_count_sum() == 0,
-            "The clue penalty is applied correctly"
-        );
+        assert!(question.borrow_mut().answers.contains("answer_1"), "The original answer remains unchanged");
     }
 
     #[test]
-    fn reveal_clue_for_penalty_with_multiple_answers() {
+    fn reveal_clue_with_multiple_answers() {
         // Given
-        let mut question = Question::new("location_1".to_string(), "question_1".to_string(), "placeholder".to_string());
-        question.answers = HashSet::from(["answer_one".to_string(), "answer_two".to_string()]);
-        let expected = "a■s■e■_■n■ or a■s■e■_■w■".to_string();
-        let expected_variant = "a■s■e■_■w■ or a■s■e■_■n■".to_string();
+        let question = Rc::new(RefCell::new(Question::new("location_1".to_string(), "question_1".to_string(), "placeholder".to_string())));
+        question.borrow_mut().answers  = HashSet::from(["answer_one".to_string(), "answer_two".to_string()]);
+        let expected = "a■s■e■_■n■".to_string();
+        let expected_variant = "a■s■e■_■w■".to_string();
 
         // When
-        let actual = reveal_clue_for_penalty(&mut question);
+        let actual = reveal_clue(question);
 
         // Then
         assert!(expected == actual || expected_variant == actual); // HashSet ordering can be random.
@@ -104,35 +94,29 @@ mod tests {
 
 
     #[test]
-    fn reveal_answer_for_penalty_for_single_answer() {
+    fn reveal_answer_for_single_answer() {
         // Given
-        let mut question = Question::new("location_1".to_string(), "question_1".to_string(), "answer_1".to_string());
+        let question =  Rc::new(RefCell::new(Question::new("location_1".to_string(), "question_1".to_string(), "answer_1".to_string())));
         let expected = "answer_1".to_string();
 
         // When
-        let actual = reveal_answer_for_penalty(&mut question);
+        let actual = reveal_answer(question);
 
         // Then
         assert_eq!(expected, actual);
-        assert!(
-            question.get_error_count_for_round() == ANSWER_REVEAL_PENALTY
-                && question.get_error_count_sum() == ANSWER_REVEAL_PENALTY
-                && question.get_correct_count_for_round() == 0
-                && question.get_correct_count_sum() == 0,
-            "The clue penalty is applied correctly"
-        );
     }
 
     #[test]
-    fn reveal_answer_for_penalty_with_multiple_answers() {
+    fn reveal_answer_for_with_multiple_answers() {
         // Given
-        let mut question = Question::new("location_1".to_string(), "question_1".to_string(), "placeholder".to_string());
-        question.answers = HashSet::from(["answer_one".to_string(), "answer_two".to_string()]);
-        let expected = "answer_one or answer_two".to_string();
-        let expected_variant = "answer_two or answer_one".to_string();
+        let question =  Rc::new(RefCell::new(Question::new("location_1".to_string(), "question_1".to_string(), "placeholder".to_string())));
+        question.borrow_mut().answers = HashSet::from(["answer_one".to_string(), "answer_two".to_string()]);
+
+        let expected = "answer_one".to_string();
+        let expected_variant = "answer_two".to_string();
 
         // When
-        let actual = reveal_answer_for_penalty(&mut question);
+        let actual = reveal_answer(question);
 
         // Then
         assert!(expected == actual || expected_variant == actual); // HashSet ordering can be random.

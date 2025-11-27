@@ -10,6 +10,7 @@ use ratatui_widgets::table::TableState;
 use strum::{EnumIter, EnumMessage, VariantArray};
 use tui_input::Input;
 use shellingo_core::practice;
+use shellingo_core::practice::{ANSWER_REVEAL_PENALTY, CLUE_REVEAL_PENALTY};
 use shellingo_core::question::Question;
 use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_all_paths, QuestionGroup};
 
@@ -40,6 +41,10 @@ pub enum PracticeControlOptions {
     TryHardest5,
     #[strum(message="Try Hardest 10")]
     TryHardest10,
+    #[strum(message="Show Clue")]
+    ShowClue,
+    #[strum(message="Show Answer")]
+    ShowAnswer
 }
 
 #[derive(Debug)]
@@ -263,7 +268,25 @@ impl AppState {
             PracticeControlOptions::TryHardest5 => self.practice_filter_data_to_hardest_in_round(5),
             PracticeControlOptions::TryHardest10 => self.practice_filter_data_to_hardest_in_round(10),
             PracticeControlOptions::TryAll => self.practice_reset_round_question_filters(),
+            PracticeControlOptions::ShowClue => self.practice_show_clue(),
+            PracticeControlOptions::ShowAnswer => self.practice_show_answer(),
         }
+    }
+
+    fn practice_show_clue(&mut self) -> Result<(), Box<dyn Error>> {
+        let question = self.practice_get_current_question_in_round().clone();
+        let clue = practice::reveal_clue(question.clone());
+        self.answer_input = Input::new(clue);
+        question.borrow_mut().increment_error_count(CLUE_REVEAL_PENALTY);
+        Ok(())
+    }
+
+    fn practice_show_answer(&mut self) -> Result<(), Box<dyn Error>> {
+        let question = self.practice_get_current_question_in_round();
+        let answer = practice::reveal_answer(question.clone());
+        self.answer_input = Input::new(answer);
+        question.borrow_mut().increment_error_count(ANSWER_REVEAL_PENALTY);
+        Ok(())
     }
 
     pub fn practice_validate_attempt(&mut self) -> Result<(), Box<dyn Error>> {

@@ -205,8 +205,8 @@ mod tests {
             ]),
 
             BTreeMap::from([
-                (1, "f0_q1".to_string()),
-                (2, "f1_q1".to_string()),
+                (0, "f0_q1".to_string()),
+                (1, "f1_q1".to_string()),
             ])
 
         );
@@ -240,8 +240,8 @@ mod tests {
             ]),
 
             BTreeMap::from([
-                (1, "f0_q1".to_string()),
-                (2, "f1_q1".to_string()),
+                (0, "f0_q1".to_string()),
+                (1, "f1_q1".to_string()),
             ])
         );
 

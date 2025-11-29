@@ -6,10 +6,8 @@
 A simple command line tool for custom vocabulary practice.
 (Without the constant harassment of the Duolingo owl)
 
-> This is the Rust version of the [original java-based project](https://github.com/tlvlp/shellingo-java), because why not.
+This is the Rust version of the [original java-based project](https://github.com/tlvlp/shellingo-java), because why not.
  
-> Note: Currently it's a learning project, and not yet a functional tool.
-
 ## How to get the app
 Either [Download the latest release for your OS](https://github.com/tlvlp/shellingo/releases),
 or build it from source:

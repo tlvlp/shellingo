@@ -47,17 +47,6 @@ impl Question {
         self.error_count_round.clone()
     }
 
-    pub fn get_correct_count_for_round(&self) -> u16 {
-        self.correct_count_round.clone()
-    }
-
-    pub fn get_error_count_sum(&self) -> u16 {
-        self.error_count_sum.clone()
-    }
-
-    pub fn get_correct_count_sum(&self) -> u16 {
-        self.correct_count_sum.clone()
-    }
 }
 
 impl PartialEq for Question {

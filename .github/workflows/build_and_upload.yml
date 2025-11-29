@@ -1,47 +1,55 @@
 name: Build and upload binaries
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  release:
+    types: [created]
 
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
   
 jobs:
-  build-nix:
-    runs-on: ubuntu-latest
-    outputs:
-      release_built: ${{ steps.set-output.outputs.release_built }}
-    steps:
-      - uses: actions/checkout@v5
-      - name: Rust update
-        run: rustup update
-      - name: Build binary
-        run: cargo build --release
-      - name: Run tests
-        run: cargo test --release
-      - name: Upload release artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: shellingo-linux
-          path: target/release/shellingo_cli
-
-  build-win:
-    runs-on: windows-latest
+  build:
+    name: Build binaries
     strategy:
       matrix:
-        BUILD_TARGET: [release] # refers to a cargo profile
-    outputs:
-      release_built: ${{ steps.set-output.outputs.release_built }}
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            extension: ''
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            extension: '.exe'
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
       - name: Rust update
         run: rustup update
+        with:
+          targets: ${{ matrix.target }}
+
       - name: Build binary
-        run: cargo build --release
+        run: cargo build --release --target ${{ matrix.target }}
+
       - name: Run tests
         run: cargo test --release
+
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
-          name: shellingo-linux
-          path: target/release/shellingo_cli.exe
+          name: shellingo-${{ matrix.target }}
+          path: target/release/shellingo_cli${{ matrix.extension }}
+
+#      - name: Upload release
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ github.event.release.upload_url }}
+#          asset_path: target/release/shellingo_cli_${{ matrix.extension }}
+#          asset_name: ${{ matrix.target }}-${{ github.event.release.tag_name }}
+#          asset_content_type: application/octet-stream

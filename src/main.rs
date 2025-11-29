@@ -8,6 +8,8 @@ mod ui;
 mod ui_setup_phase;
 mod ui_practice_phase;
 mod ui_shared;
+mod question;
+mod practice;
 
 fn main() -> std::io::Result<()> {
     ratatui::run(|terminal| {

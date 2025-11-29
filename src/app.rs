@@ -9,9 +9,9 @@ use ratatui_widgets::scrollbar::ScrollbarState;
 use ratatui_widgets::table::TableState;
 use strum::{EnumIter, EnumMessage, VariantArray};
 use tui_input::Input;
-use shellingo_core::practice;
-use shellingo_core::practice::{ANSWER_REVEAL_PENALTY, CLUE_REVEAL_PENALTY};
-use shellingo_core::question::Question;
+use crate::practice;
+use crate::practice::{ANSWER_REVEAL_PENALTY, CLUE_REVEAL_PENALTY};
+use crate::question::Question;
 use crate::question_parser::{collect_groups_from_multiple_paths, get_paths_from, read_all_questions_from_all_paths, QuestionGroup};
 
 #[derive(Debug, Clone)]

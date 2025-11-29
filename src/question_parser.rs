@@ -1,5 +1,5 @@
 use regex::Regex;
-use shellingo_core::question::Question;
+use crate::question::Question;
 use std::{env, fs::{self}, path::PathBuf, sync::LazyLock};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -187,18 +187,18 @@ mod tests {
     #[test]
     fn all_groups_are_collected_from_nested_subdirectories_with_mixed_file_types() {
         // Given
-        let paths = vec![PathBuf::from("tests/fixtures/nested_with_mixed_files")];
+        let paths = vec![PathBuf::from("fixtures/nested_with_mixed_files")];
 
         // When
         let expected = (
             BTreeMap::from([
                 ("f0_q1".to_string(), QuestionGroup {
-                    paths: vec![PathBuf::from("tests/fixtures/nested_with_mixed_files/f0_q1.sll")],
+                    paths: vec![PathBuf::from("fixtures/nested_with_mixed_files/f0_q1.sll")],
                     questions: vec![],
                     is_active: false,
                 }),
                 ("f1_q1".to_string(), QuestionGroup {
-                    paths: vec![PathBuf::from("tests/fixtures/nested_with_mixed_files/f1/f1_q1.sll")],
+                    paths: vec![PathBuf::from("fixtures/nested_with_mixed_files/f1/f1_q1.sll")],
                     questions: vec![],
                     is_active: false,
                 }),
@@ -222,18 +222,18 @@ mod tests {
     fn all_groups_are_collected_from_multiple_paths() {
         // Given
         let paths = vec![
-            PathBuf::from("tests/fixtures/duplicate_groups/nested_1"),
-            PathBuf::from("tests/fixtures/duplicate_groups/nested_2"),
+            PathBuf::from("fixtures/duplicate_groups/nested_1"),
+            PathBuf::from("fixtures/duplicate_groups/nested_2"),
         ];
         let expected = (
             BTreeMap::from([
                 ("f0_q1".to_string(), QuestionGroup {
-                    paths: vec![PathBuf::from("tests/fixtures/duplicate_groups/nested_1/f0_q1.sll"), PathBuf::from("tests/fixtures/duplicate_groups/nested_2/f0_q1.sll")],
+                    paths: vec![PathBuf::from("fixtures/duplicate_groups/nested_1/f0_q1.sll"), PathBuf::from("fixtures/duplicate_groups/nested_2/f0_q1.sll")],
                     questions: vec![],
                     is_active: false,
                 }),
                 ("f1_q1".to_string(), QuestionGroup {
-                    paths: vec![PathBuf::from("tests/fixtures/duplicate_groups/nested_1/f1/f1_q1.sll"), PathBuf::from("tests/fixtures/duplicate_groups/nested_2/f1/f1_q1.sll")],
+                    paths: vec![PathBuf::from("fixtures/duplicate_groups/nested_1/f1/f1_q1.sll"), PathBuf::from("fixtures/duplicate_groups/nested_2/f1/f1_q1.sll")],
                     questions: vec![],
                     is_active: false,
                 }),
@@ -255,7 +255,7 @@ mod tests {
     #[test]
     fn comments_are_skipped() {
         // Given
-        let path = vec![PathBuf::from("tests/fixtures/comment")];
+        let path = vec![PathBuf::from("fixtures/comment")];
         let expected = vec![Rc::new(RefCell::new(Question::new(
             "tests/fixtures/comment".to_string(),
            "question".to_string(),
@@ -272,7 +272,7 @@ mod tests {
     #[test]
     fn same_question_with_different_answers_in_multiple_files_collected_to_a_single_question() {
         // Given
-        let paths = vec![PathBuf::from("tests/fixtures/collect")];
+        let paths = vec![PathBuf::from("fixtures/collect")];
         let mut question = Question::new("placeholder".to_string(), "question".to_string(),"placeholder ".to_string());
         question.locations = HashSet::from(["tests/fixtures/collect/f1/f1_q1.sll".to_string(), "tests/fixtures/collect/f0_q2.sll".to_string(), "tests/fixtures/collect/f0_q1.sll".to_string()]);
         question.answers = HashSet::from(["f0_q2 answer".to_string(), "f0_q1 answer".to_string(), "f1_q1 answer".to_string()]);

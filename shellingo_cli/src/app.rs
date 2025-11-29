@@ -59,6 +59,7 @@ pub struct AppState {
     pub question_group_list_scrollbar_state: ScrollbarState,
     pub question_table_state: TableState,
     pub question_table_scrollbar_state: ScrollbarState,
+    pub setup_body_left_size: Option<u16>,
 
     // Practice
     pub practice_controls_list_state: ListState,
@@ -67,6 +68,7 @@ pub struct AppState {
     pub current_question_index: usize,
     pub answer_input: Input,
     pub is_previous_answer_successful: Option<bool>,
+    pub practice_body_left_size: Option<u16>,
 }
 
 impl AppState {
@@ -90,6 +92,7 @@ impl AppState {
             question_group_list_scrollbar_state: ScrollbarState::default(),
             question_table_state: TableState::default(),
             question_table_scrollbar_state: ScrollbarState::default(),
+            setup_body_left_size: None,
 
             // Practice
             practice_controls_list_state: ListState::default(),
@@ -98,6 +101,7 @@ impl AppState {
             current_question_index: 0,
             answer_input: Input::default(),
             is_previous_answer_successful: None,
+            practice_body_left_size: None,
         };
 
         app.question_group_list_state.select_first();
@@ -206,6 +210,23 @@ impl AppState {
         self.practice_shuffle_questions();
         self.set_active_component(UiComponent::PracticeMain);
         self.practice_reset_answer()
+    }
+
+    pub fn setup_increase_body_left_size(&mut self) -> Result<(), Box<dyn Error>> {
+        self.setup_body_left_size = self.setup_body_left_size.map(|size| size + 5);
+        Ok(())
+    }
+
+    pub fn setup_decrease_body_left_size(&mut self) -> Result<(), Box<dyn Error>> {
+        self.setup_body_left_size = self.setup_body_left_size.map(|size| {
+            if size.le(&4) { 0 } else {size - 5}
+        });
+        Ok(())
+    }
+
+    pub fn setup_reset_body_left_size(&mut self) -> Result<(), Box<dyn Error>> {
+        self.setup_body_left_size = None;
+        Ok(())
     }
 
     pub fn practice_navigate_to_setup(&mut self) -> Result<(), Box<dyn Error>> {
@@ -329,10 +350,26 @@ impl AppState {
     pub fn practice_get_round_status_string(&mut self) -> String {
         let feedback_message = match self.is_previous_answer_successful {
             None => ":) Good luck!",
-            Some(true) =>  r" \o/ Yay, correct!",
-            Some(false) => r" _o_ Try again! (or request a clue form the menu)"
+            Some(true) =>  r"\o/ Yay, correct!",
+            Some(false) => r"_o_ Try again! (or request a clue form the menu)"
         };
-        format!("{}/{} - {}", self.current_question_index + 1, self.round_questions.len(), feedback_message)
+        format!("{}/{} {}", self.current_question_index + 1, self.round_questions.len(), feedback_message)
+    }
+
+    pub fn practice_increase_body_left_size(&mut self) -> Result<(), Box<dyn Error>> {
+        self.practice_body_left_size = self.practice_body_left_size.map(|size| size + 5);
+        Ok(())
+    }
+    pub fn practice_decrease_body_left_size(&mut self) -> Result<(), Box<dyn Error>> {
+        self.practice_body_left_size = self.practice_body_left_size.map(|size| {
+            if size.le(&4) { 0 } else {size - 5}
+        });
+        Ok(())
+    }
+
+    pub fn practice_reset_body_left_size(&mut self) -> Result<(), Box<dyn Error>> {
+        self.practice_body_left_size = None;
+        Ok(())
     }
 
     pub fn open_exit_popup(&mut self) -> Result<(), Box<dyn Error>> {

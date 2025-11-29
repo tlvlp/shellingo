@@ -17,7 +17,9 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
 
     // Split the main layout
     let [help_area, body_area] =
-        Layout::vertical([Constraint::Length(3), Constraint::Min(0)])
+        Layout::vertical([
+            Constraint::Length(3),
+            Constraint::Min(0)])
             .areas(frame.area());
 
     // Title
@@ -30,8 +32,14 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
     // Body layout
     let [body_left_area, body_right_area]  = Layout::horizontal(
         match app_phase {
-            AppPhase::Setup => ui_setup_phase::get_body_constraints(),
-            AppPhase::Practice => ui_practice_phase::get_body_constraints(),
+            AppPhase::Setup => [
+                Constraint::Length(app.setup_body_left_size.get_or_insert(45).clone()),
+                Constraint::Fill(1)
+            ],
+            AppPhase::Practice => [
+                Constraint::Length(app.practice_body_left_size.get_or_insert(22).clone()),
+                Constraint::Fill(1)
+            ],
         }
     ).areas(body_area);
 

@@ -10,11 +10,11 @@ pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
     if event::poll(std::time::Duration::from_millis(100))? {
         let input_event = crossterm::event::read()?;
         match input_event {
-            Event::Key(KeyEvent { code: key, .. }) => {
+            Event::Key(key) => {
                 match app.get_active_component() {
                     // Setup phase
-                    UiComponent::GroupSelector => handle_group_selector_input(app, key),
-                    UiComponent::QuestionSelector => handle_question_selector_input(app, key),
+                    UiComponent::GroupSelector => handle_setup_group_selector_input(app, key),
+                    UiComponent::QuestionSelector => handle_setup_question_selector_input(app, key),
 
                     // Practice phase
                     UiComponent::PracticeControls => handle_practice_controls_input(app, key),
@@ -38,57 +38,67 @@ pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
     }
 }
 
-fn handle_group_selector_input(app: &mut AppState, key: KeyCode) -> Result<(), Box<dyn Error>> {
-    match key {
+fn handle_setup_group_selector_input(app: &mut AppState, key: KeyEvent) -> Result<(), Box<dyn Error>> {
+    match key.code {
         KeyCode::Up | KeyCode::Char('k') => app.setup_previous_group(),
         KeyCode::Down | KeyCode::Char('j') => app.setup_next_group(),
         KeyCode::Enter | KeyCode::Char(' ') => app.setup_toggle_group_active_status_and_load_questions(),
         KeyCode::Char('p') => app.setup_navigate_to_practice(),
+        KeyCode::Char('+') => app.setup_increase_body_left_size(),
+        KeyCode::Char('-') => app.setup_decrease_body_left_size(),
+        KeyCode::Char('#') => app.setup_reset_body_left_size(),
         KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.setup_toggle_panes(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),
     }
 }
 
-fn handle_question_selector_input(app: &mut AppState, key: KeyCode) -> Result<(), Box<dyn Error>> {
-    match key {
+fn handle_setup_question_selector_input(app: &mut AppState, key: KeyEvent) -> Result<(), Box<dyn Error>> {
+    match key.code {
         KeyCode::Up | KeyCode::Char('k') => app.setup_previous_question(),
         KeyCode::Down | KeyCode::Char('j') => app.setup_next_question(),
         KeyCode::Char('p') => app.setup_navigate_to_practice(),
+        KeyCode::Char('-') => app.setup_increase_body_left_size(),
+        KeyCode::Char('+') => app.setup_decrease_body_left_size(),
+        KeyCode::Char('#') => app.setup_reset_body_left_size(),
         KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.setup_toggle_panes(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),
     }
 }
 
-fn handle_practice_controls_input(app: &mut AppState, key: KeyCode) -> Result<(), Box<dyn Error>> {
-    match key {
+fn handle_practice_controls_input(app: &mut AppState, key: KeyEvent) -> Result<(), Box<dyn Error>> {
+    match key.code {
         KeyCode::Up | KeyCode::Char('k') => app.practice_select_previous_menu_item(),
         KeyCode::Down | KeyCode::Char('j') => app.practice_select_next_menu_item(),
         KeyCode::Enter => app.practice_activate_selected_control(),
         KeyCode::Tab | KeyCode::Left | KeyCode::Right => app.practice_toggle_panes(),
+        KeyCode::Char('+') => app.practice_increase_body_left_size(),
+        KeyCode::Char('-') => app.practice_decrease_body_left_size(),
+        KeyCode::Char('#') => app.practice_reset_body_left_size(),
         KeyCode::Esc => app.open_exit_popup(),
         _ => Ok(()),
     }
 }
 
 fn handle_practice_main_input(app: &mut AppState, event: Event) -> Result<(), Box<dyn Error>> {
-    match event.as_key_event()
-        .expect("Event expected to be a key event at this point")
-        .code {
-            KeyCode::Tab => app.practice_toggle_panes(),
-            KeyCode::Enter => app.practice_validate_attempt(),
-            KeyCode::Esc => app.open_exit_popup(),
-            _ => {
-                app.answer_input.handle_event(&event);
-                Ok(())
-            }
+    let key_event = event.as_key_event();
+    match key_event.expect("Event expected to be a key event at this point").code { 
+        KeyCode::Tab => app.practice_toggle_panes(),
+        KeyCode::Enter => app.practice_validate_attempt(),
+        KeyCode::Esc => app.open_exit_popup(),
+        KeyCode::Char('-') => app.practice_increase_body_left_size(),
+        KeyCode::Char('+') => app.practice_decrease_body_left_size(),
+        KeyCode::Char('#') => app.practice_reset_body_left_size(),
+        _ => {
+            app.answer_input.handle_event(&event);
+            Ok(())
+        }
     }
 }
 
-
-fn handle_exit_popup_input(app: &mut AppState, code: KeyCode) -> Result<(), Box<dyn Error>> {
-    match code {
+fn handle_exit_popup_input(app: &mut AppState, key: KeyEvent) -> Result<(), Box<dyn Error>> {
+    match key.code {
         KeyCode::Enter => app.exit_app(),
         KeyCode::Esc => app.close_exit_popup(),
         _ => Ok(()),

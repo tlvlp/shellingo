@@ -9,14 +9,10 @@ use ratatui_widgets::table::{Row, Table};
 use crate::app::{AppState, UiComponent};
 use crate::ui_shared;
 
-pub(crate) fn get_body_constraints() -> [Constraint; 2] {
-    [Constraint::Percentage(20), Constraint::Percentage(80)]
-}
-
 pub(crate) fn render_title_with_help_text(frame: &mut Frame, title_block: Block, draw_area: Rect) {
     frame.render_widget(
         Paragraph::new(
-            "[Tab] switch panes, [↑↓←→] navigate, [Enter/Space] select groups, [P] start practice, [Esc] quit"
+            "[Tab] switch panes, [↑↓←→] navigate, [Enter/Space] select groups, [P] start practice, [+/#/-] resize, [Esc] quit"
         ).block(title_block).style(Style::new().dim()),
 
         draw_area

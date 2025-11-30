@@ -14,12 +14,11 @@ or build it from source:
 
 1. [install the rust toolchain](https://rust-lang.org/tools/install/).
 2. Clone this repo.
-3. Run the cargo build command in the `<repo_root>/shellingo_cli` directory of this repo:
+3. Run the cargo build command in the root directory of this repo:
 ```
 cargo build --release
 ```
-4. Find the app under the `<repo_root>/shellingo_cli/target/release/shellingo_cli`
-
+4. Find the app binary under the `<repo_root>/target/release/shellingo_cli`
 
 ## How to use 
 
@@ -27,7 +26,7 @@ cargo build --release
 2. Download or [write your questions](#how-to-add-vocabulariesquestions) 
 3. Run the app:
 
-Without arguments (questions loaded from in or under the directory where the app is):
+Without arguments (all questions loaded from in or under the directory where the app is):
 ```shell
 ./shellingo
 ```
@@ -40,9 +39,9 @@ Or with one or multiple specific paths to search for the vocabulary files:
 ## Input paths
 
 By default, the app reads files in and under its parent directory, 
-but it also takes an unrestricted number of arguments with paths to override the default path.
+but it also takes an arbitrary number of arguments with paths to override the default path.
 - These arguments can contain either a parent folder to be traversed or an exact file path.
-- Folders will be traversed without a depth limit, but will only pick up shellingo files. 
+- Folders will be traversed without a depth limit, and will only pick up shellingo files. 
 
  ```shell
 ./shellingo mypath/my_parent_folder
@@ -50,10 +49,6 @@ but it also takes an unrestricted number of arguments with paths to override the
 ```
 
 ## How to add vocabularies/questions
-
-> Shellingo will read all files under the [Input paths](#input-paths). 
-> Make sure not to mix languages, or if you do indicate the language in each file name or question :)
-> All the questions will be presented in a random order. Each word will be repeated until a correct answer is given.
 
 - Create a text file and add one word/question per row and provide the expected answer,
 separated with a pipe **|** character.
@@ -71,7 +66,7 @@ separated with a pipe **|** character.
 ```
 
 ```text
-# More complex sentences with exotic white space use that will be corrected
+# More complex sentences with exotic white space use will be corrected
 
 the elephant   likes  milk |  słoń  lubi  mleko
 

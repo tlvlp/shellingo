@@ -36,18 +36,20 @@ jobs:
       - name: Run tests
         run: cargo test --release
 
-      - name: Upload release artifact
+      - name: Upload release artifact on manual pipeline run
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
           name: shellingo-${{ matrix.target }}
           path: target/${{ matrix.target }}/release/shellingo_cli${{ matrix.extension }}
 
-#      - name: Upload release
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ github.event.release.upload_url }}
-#          asset_path: target/${{ matrix.target }}/release/shellingo_cli${{ matrix.extension }}
-#          asset_name: ${{ matrix.target }}-${{ github.event.release.tag_name }}
-#          asset_content_type: application/octet-stream
+      - name: Upload binaries for release
+        if: ${{ github.event_name == 'release' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: target/${{ matrix.target }}/release/shellingo_cli${{ matrix.extension }}
+          asset_name: ${{ matrix.target }}-${{ github.event.release.tag_name }}
+          asset_content_type: application/octet-stream

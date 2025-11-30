@@ -3,7 +3,7 @@ name: Build and upload binaries
 on:
   workflow_dispatch:
   release:
-    types: [created]
+    types: [published]
 
 env:
   CARGO_TERM_COLOR: always

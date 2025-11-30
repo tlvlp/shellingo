@@ -29,8 +29,6 @@ jobs:
 
       - name: Rust update
         run: rustup update
-        with:
-          targets: ${{ matrix.target }}
 
       - name: Build binary
         run: cargo build --release --target ${{ matrix.target }}

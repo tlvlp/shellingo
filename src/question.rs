@@ -44,7 +44,7 @@ impl Question {
     }
 
     pub fn get_error_count_for_round(&self) -> u16 {
-        self.error_count_round.clone()
+        self.error_count_round
     }
 
 }

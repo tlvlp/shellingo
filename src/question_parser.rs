@@ -51,8 +51,8 @@ fn merge_paths_from_matching_groups(mut acc: BTreeMap<String, QuestionGroup>, di
         .unwrap() // Already filtered
         .replace(".sll", "");
     let group_details = acc.entry(group_name.clone())
-        .or_insert(QuestionGroup::default());
-    group_details.paths.push(PathBuf::from(dir_entry.into_path()));
+        .or_default();
+    group_details.paths.push(dir_entry.into_path());
     acc
 }
 
@@ -78,7 +78,7 @@ fn filter_for_files(dir_entry: &DirEntry) -> bool {
     !dir_entry.path().is_dir()
 }
 
-pub fn read_all_questions_from_all_paths(paths: &Vec<PathBuf>) -> Vec<Rc<RefCell<Question>>> {
+pub fn read_all_questions_from_all_paths(paths: &[PathBuf]) -> Vec<Rc<RefCell<Question>>> {
     paths.iter()
         .cloned()
         .flat_map(get_all_files_under_path)

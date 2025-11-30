@@ -25,16 +25,16 @@ pub fn reveal_clue(question: Rc<RefCell<Question>>) -> String {
 pub fn reveal_answer(question: Rc<RefCell<Question>>) -> String {
     question.borrow_mut().answers.iter()
         .next()
-        .expect(format!("Cannot reveal answer(s): '{:?}'", question).as_str()).clone()
+        .unwrap_or_else(|| panic!("Cannot reveal answer(s): '{:?}'", question))
+        .clone()
 }
 
-pub fn get_hardest_questions_in_round(questions: &Vec<Rc<RefCell<Question>>>, limit: usize) -> Vec<Rc<RefCell<Question>>> {
-    let mut refs = questions.iter().cloned().collect::<Vec<Rc<RefCell<Question>>>>();
-    refs.sort_by(|a, b|
-        // Reverse sort
-        b.borrow().get_error_count_for_round()
-            .cmp(&a.borrow().get_error_count_for_round())
-    );
+pub fn get_hardest_questions_in_round(questions: &[Rc<RefCell<Question>>], limit: usize) -> Vec<Rc<RefCell<Question>>> {
+    // Reverse sort (hardest first)
+    let mut refs = questions.to_vec();
+    refs.sort_by_key(|question|
+        std::cmp::Reverse(question.borrow().get_error_count_for_round()));
+    // Keep only the first X items
     refs.into_iter()
         .take(limit)
         .collect()

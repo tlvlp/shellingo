@@ -170,7 +170,7 @@ impl AppState {
         if group_op.is_none() { return vec![] }
         let group = group_op.unwrap();
         if group.is_active {
-            group.questions.iter().cloned().collect() //note: Rc::clone() points to the same object
+            group.questions.to_vec() //note: Rc::clone() points to the same object
         } else {
             vec![]
         }
@@ -179,7 +179,7 @@ impl AppState {
     fn setup_get_selected_group_name(&mut self) -> &String {
         let selected_group_pos = self.question_group_list_state.selected().unwrap_or(0);
         self.group_names_by_indices.get(&selected_group_pos)
-            .expect(format!("Can't find selected group at position {selected_group_pos}").as_str())
+            .unwrap_or_else(|| panic!("Can't find selected group at position {selected_group_pos}"))
     }
 
     pub fn setup_previous_question(&mut self) -> Result<(), Box<dyn Error>> {

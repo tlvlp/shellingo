@@ -33,11 +33,11 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
     let [body_left_area, body_right_area]  = Layout::horizontal(
         match app_phase {
             AppPhase::Setup => [
-                Constraint::Length(app.setup_body_left_size.get_or_insert(45).clone()),
+                Constraint::Length(*app.setup_body_left_size.get_or_insert(45)),
                 Constraint::Fill(1)
             ],
             AppPhase::Practice => [
-                Constraint::Length(app.practice_body_left_size.get_or_insert(22).clone()),
+                Constraint::Length(*app.practice_body_left_size.get_or_insert(22)),
                 Constraint::Fill(1)
             ],
         }

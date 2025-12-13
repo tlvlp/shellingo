@@ -1,4 +1,4 @@
-use crate::app::{AppPhase, AppState, UiComponent};
+use crate::app::{AppPhase, AppState, PopupDetails, UiComponent};
 use crate::{ ui_setup_phase, ui_practice_phase};
 use ratatui::prelude::Color;
 use ratatui::style::Style;
@@ -57,21 +57,20 @@ pub fn draw_ui(frame: &mut Frame, app: &mut AppState) {
         }
     };
 
-    // Exit popup
-    if app.get_active_component() == UiComponent::ExitPopup {
-        let popup_area = popup_area(frame.area(), 37, 6);
-        let popup = get_exit_popup();
+    // Render popup
+    if [UiComponent::ExitPopup, UiComponent::NotificationPopup].contains(&app.get_active_component()) {
+        let popup_details = &app.popup_details;
+        let popup_area = popup_area(frame.area(), popup_details.width, popup_details.height);
+        let popup = get_popup(popup_details);
         frame.render_widget(Clear, popup_area);
         frame.render_widget(popup, popup_area);
-
     }
 }
 
-fn get_exit_popup<'a>() -> Paragraph<'a> {
-    Paragraph::new("Do you want to exit Shellingo?\n\
-                        [Enter] Yes, [Esc] No")
+fn get_popup<'a>(details: &PopupDetails) -> Paragraph<'a> {
+    Paragraph::new(details.message.clone())
         .block(Block::bordered()
-            .title("[ Exit ]")
+            .title(details.title.clone())
             .padding(Padding::horizontal(1))
             .padding(Padding::vertical(1))
             .border_type(BorderType::Thick)

@@ -27,6 +27,7 @@ pub enum UiComponent {
     PracticeControls,
     PracticeMain,
     ExitPopup,
+    NotificationPopup,
 }
 
 #[derive(EnumIter, EnumMessage,     VariantArray)]
@@ -47,10 +48,19 @@ pub enum PracticeControlOptions {
     ShowAnswer
 }
 
+#[derive(Debug, Clone)]
+pub struct PopupDetails {
+    pub title: String,
+    pub message: String,
+    pub width: u16,
+    pub height: u16,
+}
+
 #[derive(Debug)]
 pub struct AppState {
     active_component: UiComponent,
     last_active_component: UiComponent,
+    pub popup_details: PopupDetails,
 
     // Setup
     pub questions_by_groups: BTreeMap<String, QuestionGroup>,
@@ -84,6 +94,12 @@ impl AppState {
         let mut app = Self {
             active_component: UiComponent::GroupSelector,
             last_active_component: UiComponent::GroupSelector,
+            popup_details: PopupDetails {
+                title: "Error".to_string(),
+                message: "No popup details set!".to_string(),
+                width: 37,
+                height: 6,
+            },
 
             // Setup
             questions_by_groups,
@@ -118,7 +134,7 @@ impl AppState {
         match component {
             UiComponent::GroupSelector | UiComponent::QuestionSelector => AppPhase::Setup,
             UiComponent::PracticeControls | UiComponent::PracticeMain => AppPhase::Practice,
-            UiComponent::ExitPopup => {
+            UiComponent::ExitPopup | UiComponent::NotificationPopup => {
                 // Defined by the component the popup was opened from.
                 self.get_app_phase_for_component(&self.last_active_component)
             },
@@ -147,9 +163,13 @@ impl AppState {
     pub fn setup_toggle_group_active_status_and_load_questions(&mut self) -> Result<(), Box<dyn Error>> {
         let selected_group_name = self.setup_get_selected_group_name().clone();
         let selected_group_op = self.questions_by_groups.get_mut(&selected_group_name);
-        if selected_group_op.is_none() { return Ok(()) } //TODO: Proper error message for empty list.
-
+        if selected_group_op.is_none() {
+            return self.open_notification_popup(
+                format!("Error: Selected group not found: '{}'", selected_group_name).as_str()
+            );
+        }
         let selected_group = selected_group_op.unwrap();
+
         // Toggle active state
         selected_group.is_active = selected_group.is_active.not();
 
@@ -170,7 +190,7 @@ impl AppState {
         if group_op.is_none() { return vec![] }
         let group = group_op.unwrap();
         if group.is_active {
-            group.questions.to_vec() //note: Rc::clone() points to the same object
+            group.questions.to_vec()
         } else {
             vec![]
         }
@@ -372,11 +392,30 @@ impl AppState {
         Ok(())
     }
 
-    pub fn open_exit_popup(&mut self) -> Result<(), Box<dyn Error>> {
-        self.set_active_component(UiComponent::ExitPopup);
+    pub fn open_notification_popup(&mut self, message: &str) -> Result<(), Box<dyn Error>> {
+        self.set_active_component(UiComponent::NotificationPopup);
+        self.popup_details = PopupDetails {
+            title: "[ ! ]".to_string(),
+            width: message.len() as u16 + 7,
+            height: 5,
+            message: message.to_string(),
+        };
         Ok(())
     }
-    pub fn close_exit_popup(&mut self) -> Result<(), Box<dyn Error>> {
+
+    pub fn open_exit_popup(&mut self) -> Result<(), Box<dyn Error>> {
+        self.set_active_component(UiComponent::ExitPopup);
+        self.popup_details = PopupDetails {
+            title: "[ Exit ]".to_string(),
+            message: "Do you want to exit Shellingo?\n\
+                        [Enter] Yes, [Esc] No".to_string(),
+            width: 37,
+            height: 6,
+        };
+        Ok(())
+    }
+
+    pub fn close_popup(&mut self) -> Result<(), Box<dyn Error>> {
         self.set_active_component(self.last_active_component.clone());
         Ok(())
     }

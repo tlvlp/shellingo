@@ -22,6 +22,7 @@ pub fn handle_input(app: &mut AppState) -> Result<(), Box<dyn Error>> {
 
                     // Exit
                     UiComponent::ExitPopup => handle_exit_popup_input(app, key),
+                    UiComponent::NotificationPopup => handle_notification_popup_input(app, key),
                 }
             }
 
@@ -100,7 +101,14 @@ fn handle_practice_main_input(app: &mut AppState, event: Event) -> Result<(), Bo
 fn handle_exit_popup_input(app: &mut AppState, key: KeyEvent) -> Result<(), Box<dyn Error>> {
     match key.code {
         KeyCode::Enter => app.exit_app(),
-        KeyCode::Esc => app.close_exit_popup(),
+        KeyCode::Esc => app.close_popup(),
+        _ => Ok(()),
+    }
+}
+fn handle_notification_popup_input(app: &mut AppState, key: KeyEvent) -> Result<(), Box<dyn Error>> {
+    match key.code {
+        KeyCode::Enter => app.close_popup(),
+        KeyCode::Esc => app.close_popup(),
         _ => Ok(()),
     }
 }

@@ -9,9 +9,9 @@ A simple command line tool for custom vocabulary practice.
 This is the Rust version of the [original java-based project](https://github.com/tlvlp/shellingo-java), because why not.
  
 ## How to get the app
-Either [Download the latest release for your OS](https://github.com/tlvlp/shellingo/releases),
-or build it from source:
+Either [Download the latest release for your OS](https://github.com/tlvlp/shellingo/releases)
 
+Or build it from source:
 1. [install the rust toolchain](https://rust-lang.org/tools/install/).
 2. Clone this repo.
 3. Run the cargo build command in the root directory of this repo:
